@@ -10,16 +10,18 @@ __global__ void spMulAdd(const int * __restrict__ row, const int * __restrict__ 
 {
     auto tid = threadIdx.x + blockIdx.x * blockDim.x; 
     T y_val = 0.0;
-
-    // ベクトルyの成分を各スレッドが計算するように並列化
+    
+    // Ax=yにおいて、ベクトルyの成分を各スレッドが計算するように並列化
     if (tid < n)
     {
+         // C++ は列優先だから、各スレッドは行列Aの各列のデータが読めれば良い
          #pragma unroll
          for (auto j = row[tid]; j < row[tid + 1]; ++j) 
          {
               y_val += val[j] * dx[col[j]];
          }
          dy[tid] = y_val;
+         // スレッド番号がnになるまで(yの全要素計算するまで)インクリメント
          tid += blockIdx.x * blockDim.x;
     }
 }

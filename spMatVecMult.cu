@@ -4,12 +4,14 @@
 #include <cstdlib> 
 #include <vector>
 
+//kernel
 template<typename T>
 __global__ void spMulAdd(const int * __restrict__ row, const int * __restrict__ col, const T * __restrict__ val, const T * __restrict__ dx, T * __restrict__ dy, int n, int nnz)
 {
     auto tid = threadIdx.x + blockIdx.x * blockDim.x; 
     T y_val = 0.0;
 
+    // ベクトルyの成分を各スレッドが計算するように並列化
     if (tid < n)
     {
          #pragma unroll
@@ -24,9 +26,11 @@ __global__ void spMulAdd(const int * __restrict__ row, const int * __restrict__ 
 
 int main(int args, char *argv[])
 {
+    // n は実行時引数で与える
     int n;
     n = atoi(argv[1]);
 
+    // 疎行列を作るところ
     int *row, *col; 
     float *val, *vec_x, *vec_y;
 
@@ -63,6 +67,7 @@ int main(int args, char *argv[])
         host_row[i + 1] = nnz;
     }
 
+    // ベクトルxとベクトルyを作るところ
     std::unique_ptr<float[]> host_x(new float[n]);
     std::unique_ptr<float[]> host_y(new float[n]);
 
@@ -72,6 +77,7 @@ int main(int args, char *argv[])
         host_y[i] = 0;
     }
 
+    // gpu に渡すところ
     cudaMalloc((void**)&row, (n + 1) * sizeof(int));
     cudaMalloc((void**)&col, nnz * sizeof(int));
     cudaMalloc((void**)&val, nnz * sizeof(float));
@@ -86,17 +92,21 @@ int main(int args, char *argv[])
     cudaMemcpy(vec_x, host_x.get(), n * sizeof(float), cudaMemcpyHostToDevice);
     cudaMemcpy(vec_y, host_y.get(), n * sizeof(float), cudaMemcpyHostToDevice);
 
+    // スレッドサイズはどう決めるのがよいのだろうか
     auto blocksize = 960;
     dim3 block (blocksize, 1, 1);
     dim3 grid  ((n + blocksize + 1) / block.x, 1, 1);
     
+    // 時間計測するところ、データ転送は含んでいない・・・？
     std::chrono::system_clock::time_point start, end;
     start = std::chrono::system_clock::now();
 
+    // 計算するところ
     spMulAdd<float> <<<grid, block>>>(row, col, val, vec_x, vec_y, n, nnz);
 
     end = std::chrono::system_clock::now();
 
+    // 結果があっているかcpuでも計算して確認するところ
     std::unique_ptr<float[]> result(new float[n]);
     cudaMemcpy(result.get(), vec_y, n * sizeof(n), cudaMemcpyDeviceToHost);
 
@@ -117,9 +127,11 @@ int main(int args, char *argv[])
     auto checker = 0;
     for (auto i = 0; i < n; i++)
     {
+        // float で誤差含めてだいたいこのくらい合ってれば正しい？
         auto m = 7 - std::log10(n);
         if (fabs(host_result[i] - result[i]) > std::pow(10, -m))
         {
+            // 基準を満たさなかったら NG
             std::cout << "ng: " << host_result[i] - result[i] << std::endl;
             checker++;
         }
@@ -134,6 +146,7 @@ int main(int args, char *argv[])
         std::cout << checker << std::endl;
     }
 
+    // 計算時間(データ転送含めない？)や次数、実効性能を出力
     auto time = static_cast<double>(std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() / 1000.0);
 
     std::cout << "n: " << n << ", nnz: " << nnz << ", threads: " << blocksize << std::endl;

@@ -94,12 +94,12 @@ int main(int args, char *argv[])
     cudaMemcpy(vec_x, host_x.get(), n * sizeof(float), cudaMemcpyHostToDevice);
     cudaMemcpy(vec_y, host_y.get(), n * sizeof(float), cudaMemcpyHostToDevice);
 
-    // スレッドサイズはどう決めるのがよいのだろうか
+    // スレッドサイズはどう決めるのがよいのだろうか?
     auto blocksize = 960;
     dim3 block (blocksize, 1, 1);
     dim3 grid  ((n + blocksize + 1) / block.x, 1, 1);
     
-    // 時間計測するところ、データ転送は含んでいない・・・？
+    // 時間計測するところ、データ転送は含まなくてok?
     std::chrono::system_clock::time_point start, end;
     start = std::chrono::system_clock::now();
 

@@ -16,7 +16,6 @@ __global__ void spMulAdd(const int * __restrict__ row, const int * __restrict__ 
          for (auto j = row[tid]; j < row[tid + 1]; ++j) 
          {
               y_val += val[j] * dx[col[j]];
-              __syncthreads();
          }
          dy[tid] = y_val;
          tid += blockIdx.x * blockDim.x;

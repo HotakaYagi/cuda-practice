@@ -97,7 +97,7 @@ int main(int args, char *argv[])
     // スレッドサイズはどう決めるのがよいのだろうか?
     auto blocksize = 960;
     dim3 block (blocksize, 1, 1);
-    dim3 grid  ((n + blocksize + 1) / block.x, 1, 1);
+    dim3 grid  (std::ceil(n / block.x), 1, 1);
     
     // 時間計測するところ、データ転送は含まなくてok?
     std::chrono::system_clock::time_point start, end;

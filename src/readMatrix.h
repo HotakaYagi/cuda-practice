@@ -21,6 +21,7 @@ public:
 
 sparseMatrix::sparseMatrix(std::string fname)
 {
+  // TODO: 長方形の行列や複素数もパースできると良い
   // mtx file を読む
   std::ifstream fin(fname);
 

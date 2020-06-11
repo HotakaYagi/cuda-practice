@@ -70,9 +70,9 @@ int main(int args, char *argv[])
 
     // 疎行列を作るところ
     int *row, *col; 
-    float *val, *vec_x, *vec_y;
+    double *val, *vec_x, *vec_y;
 
-    std::unique_ptr<float[]> host_a(new float[n * n]);
+    std::unique_ptr<double[]> host_a(new double[n * n]);
 
     for (auto i = 0; i < n * n; i++)
     {
@@ -88,7 +88,7 @@ int main(int args, char *argv[])
     }
     std::unique_ptr<int[]> host_row(new int[n + 1]);
     std::vector<int> host_col;
-    std::vector<float> host_val;
+    std::vector<double> host_val;
 
     auto nnz = 0;
     host_row[0] = nnz;
@@ -107,8 +107,8 @@ int main(int args, char *argv[])
     }
 
     // ベクトルxとベクトルyを作るところ
-    std::unique_ptr<float[]> host_x(new float[n]);
-    std::unique_ptr<float[]> host_y(new float[n]);
+    std::unique_ptr<double[]> host_x(new double[n]);
+    std::unique_ptr<double[]> host_y(new double[n]);
 
     for (auto i = 0; i < n; i++)
     {
@@ -120,17 +120,17 @@ int main(int args, char *argv[])
     // gpu に渡すところ
     cudaMalloc((void**)&row, (n + 1) * sizeof(int));
     cudaMalloc((void**)&col, nnz * sizeof(int));
-    cudaMalloc((void**)&val, nnz * sizeof(float));
-    cudaMalloc((void**)&vec_x, n * sizeof(float));
-    cudaMalloc((void**)&vec_y, n * sizeof(float));
+    cudaMalloc((void**)&val, nnz * sizeof(double));
+    cudaMalloc((void**)&vec_x, n * sizeof(double));
+    cudaMalloc((void**)&vec_y, n * sizeof(double));
 
     cudaMemcpy(row, host_row.get(), (n + 1) * sizeof(int), cudaMemcpyHostToDevice);
     auto* p_host_col = host_col.data();
     cudaMemcpy(col, p_host_col, nnz * sizeof(int), cudaMemcpyHostToDevice);
     auto* p_host_val = host_val.data();
-    cudaMemcpy(val, p_host_val, nnz * sizeof(float), cudaMemcpyHostToDevice);
-    cudaMemcpy(vec_x, host_x.get(), n * sizeof(float), cudaMemcpyHostToDevice);
-    cudaMemcpy(vec_y, host_y.get(), n * sizeof(float), cudaMemcpyHostToDevice);
+    cudaMemcpy(val, p_host_val, nnz * sizeof(double), cudaMemcpyHostToDevice);
+    cudaMemcpy(vec_x, host_x.get(), n * sizeof(double), cudaMemcpyHostToDevice);
+    cudaMemcpy(vec_y, host_y.get(), n * sizeof(double), cudaMemcpyHostToDevice);
 
     // スレッドサイズはどう決めるのがよいのだろうか?
     auto blocksize = 32;
@@ -142,15 +142,15 @@ int main(int args, char *argv[])
     start = std::chrono::system_clock::now();
 
     // 計算するところ
-    spMulAdd_vector<float> <<<grid, block>>>(row, col, val, vec_x, vec_y, n, nnz);
+    spMulAdd_vector<double> <<<grid, block>>>(row, col, val, vec_x, vec_y, n, nnz);
 
     end = std::chrono::system_clock::now();
 
     // 結果があっているかcpuでも計算して確認するところ
-    std::unique_ptr<float[]> result(new float[n]);
+    std::unique_ptr<double[]> result(new double[n]);
     cudaMemcpy(result.get(), vec_y, n * sizeof(n), cudaMemcpyDeviceToHost);
 
-    std::unique_ptr<float[]> host_result(new float[n]);
+    std::unique_ptr<double[]> host_result(new double[n]);
     for (auto i = 0; i < n; i++)
     {
         host_result[i] = 0;
@@ -167,12 +167,12 @@ int main(int args, char *argv[])
     auto checker = 0;
     for (auto i = 0; i < n; i++)
     {
-        // float で誤差含めてだいたいこのくらい合ってれば正しい？
+        // double で誤差含めてだいたいこのくらい合ってれば正しい？
         auto m = 7 - std::log10(n);
         if (fabs(host_result[i] - result[i]) > std::pow(10, -m))
         {
             // 基準を満たさなかったら NG
-            std::cout << "ng: " << host_result[i] - result[i] << std::endl;
+            std::cout << "ng: " << result[i] << std::endl;
             checker++;
         }
     }

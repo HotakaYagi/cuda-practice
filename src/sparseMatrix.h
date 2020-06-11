@@ -15,7 +15,7 @@ public:
   std::unique_ptr<double[]> matrix;
 
   sparseMatrix(std::string fname);
-  residual(const double * __restrict__ x, const double * __restrict__ y, double * __restrict__ answer);
+  void residual(const double * __restrict__ x, const double * __restrict__ y, double * __restrict__ answer);
    
   //TODO: 行列ベクトル積とか基本演算実装しとく？
   };
@@ -59,7 +59,7 @@ public:
       }
     }
 
-sparseMatrix::residual(const double * __restrict__ x, const double * __restrict__ y, double * __restrict__ answer)
+void sparseMatrix::residual(const double * __restrict__ x, const double * __restrict__ y, double * __restrict__ answer)
 {
   for (auto i = 0; i < n; i++)
   {

@@ -11,10 +11,11 @@ public:
   int m, n, nnz;
   std::unique_ptr<int[]> row;
   std::vector<int> col;
-  std::vector<float> val;
+  std::vector<double> val;
   std::unique_ptr<double[]> matrix;
 
   sparseMatrix(std::string fname);
+  residual(const double * __restrict__ x, const double * __restrict__ y, double * __restrict__ answer);
    
   //TODO: 行列ベクトル積とか基本演算実装しとく？
 };
@@ -57,5 +58,18 @@ sparseMatrix::sparseMatrix(std::string fname)
       }
     } 
       row[i + 1] = nnz_count;
+  }
+}
+
+sparseMatrix::residual(const double * __restrict__ x, const double * __restrict__ y, double * __restrict__ answer)
+{
+  for (auto i = 0; i < n; i++)
+  {
+    auto y_val = 0;
+    for (auto j = 0; j < n; j++)
+    {
+      y_val += matrix[i * n + j] * x[j];
+    }
+    answer[i] = y_val - y[i];
   }
 }

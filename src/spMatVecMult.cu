@@ -26,6 +26,42 @@ __global__ void spMulAdd(const int * __restrict__ row, const int * __restrict__ 
     }
 }
 
+template<typename T>
+__device__ T warp_reduction(T val)
+{
+#define warpSize 32
+
+    for (auto offset = warpSize / 2; offset > 0; offset /= 2)
+    {
+        val += __shfl_down_sync(0xFFFFFFFF, val, offset, warpSize);
+    }
+    return val;
+}
+
+template<typename T>
+__global__ void spMulAdd_vector(const int * __restrict__ row, const int * __restrict__ col, const T * __restrict__ val, const T * __restrict__ dx, T * __restrict__ dy, int n, int nnz)
+{
+    auto tid = threadIdx.x + blockIdx.x * blockDim.x; 
+    auto rowid = tid / warpSize;
+    auto lane = tid % warpSize;
+    T y_val = 0;
+    
+    if (rowid < n)
+    {
+         for (auto i = row[rowid] + lane; i < row[rowid + 1]; i += warpSize) 
+         {
+              y_val += val[i] * dx[col[i]];
+         }
+         y_val = warp_reduction<T>(y_val);
+    }
+    
+
+    if (lane == 0 && rowid < n)
+    { 
+         dy[rowid] = y_val;
+    }
+}
+
 int main(int args, char *argv[])
 {
     // n は実行時引数で与える
@@ -42,7 +78,8 @@ int main(int args, char *argv[])
     {
         if (static_cast<double>(std::rand()) / RAND_MAX < 0.5)
         {
-             host_a[i] = static_cast<double>(std::rand()) / RAND_MAX;
+             //host_a[i] = static_cast<double>(std::rand()) / RAND_MAX;
+             host_a[i] = 1;
         }
         else
         {
@@ -75,7 +112,8 @@ int main(int args, char *argv[])
 
     for (auto i = 0; i < n; i++)
     {
-        host_x[i] = static_cast<double>(rand()) / RAND_MAX;
+        //host_x[i] = static_cast<double>(rand()) / RAND_MAX;
+        host_x[i] = 1;
         host_y[i] = 0;
     }
 
@@ -95,16 +133,16 @@ int main(int args, char *argv[])
     cudaMemcpy(vec_y, host_y.get(), n * sizeof(float), cudaMemcpyHostToDevice);
 
     // スレッドサイズはどう決めるのがよいのだろうか?
-    auto blocksize = 960;
+    auto blocksize = 32;
     dim3 block (blocksize, 1, 1);
-    dim3 grid  (std::ceil(n / block.x), 1, 1);
+    dim3 grid  (warpSize * std::ceil(n / static_cast<double>(block.x)), 1, 1);
     
     // 時間計測するところ、データ転送は含まなくてok?
     std::chrono::system_clock::time_point start, end;
     start = std::chrono::system_clock::now();
 
     // 計算するところ
-    spMulAdd<float> <<<grid, block>>>(row, col, val, vec_x, vec_y, n, nnz);
+    spMulAdd_vector<float> <<<grid, block>>>(row, col, val, vec_x, vec_y, n, nnz);
 
     end = std::chrono::system_clock::now();
 

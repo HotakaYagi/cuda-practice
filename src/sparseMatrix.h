@@ -16,7 +16,8 @@ public:
 
   sparseMatrix(std::string fname);
   void residual(const float * __restrict__ x, const float * __restrict__ y, float * __restrict__ answer);
-   
+  void spMulAdd_vector(const T * __restrict__ dx, T * __restrict__ dy);
+  void spMulAdd_scalar(const T * __restrict__ dx, T * __restrict__ dy);
   //TODO: 行列ベクトル積とか基本演算実装しとく？
   };
   
@@ -61,7 +62,23 @@ public:
       } 
       row[i + 1] = nnz_count;
       }
-    }
+  }
+}
+
+public:
+{
+  template<typename T>
+  __device__ T warp_reduction(T val)
+  {
+  #define warpSize 32
+
+      for (auto offset = warpSize / 2; offset > 0; offset /= 2)
+      {
+          val += __shfl_down_sync(0, val, offset, warpSize);
+      }
+      return val;
+  }
+}
 
 void sparseMatrix::residual(const float * __restrict__ x, const float * __restrict__ y, float * __restrict__ answer)
 {
@@ -75,3 +92,43 @@ void sparseMatrix::residual(const float * __restrict__ x, const float * __restri
     answer[i] = y_val - y[i];
   }
 }
+
+template<typename T>
+__global__ void sparseMatrix::spMulAdd_scalar(const T * __restrict__ dx, T * __restrict__ dy)
+{
+    auto tid = threadIdx.x + blockIdx.x * blockDim.x; 
+    T y_val = 0.0;
+    if (tid < n)
+    {
+         #pragma unroll
+         for (auto j = row[tid]; j < row[tid + 1]; ++j) 
+         {
+              y_val += val[j] * dx[col[j]];
+         }
+         dy[tid] = y_val;
+    }
+}
+
+template<typename T>
+__global__ void sparseMatrix::spMulAdd_vector(const T * __restrict__ dx, T * __restrict__ dy)
+{
+    auto tid = threadIdx.x + blockIdx.x * blockDim.x; 
+    auto rowid = tid / warpSize;
+    auto lane = tid % warpSize;
+    T y_val = 0;
+    
+    if (rowid < n)
+    {
+         for (auto i = row[rowid] + lane; i < row[rowid + 1]; i += warpSize) 
+         {
+              y_val += val[i] * dx[col[i]];
+         }
+         y_val = warp_reduction<T>(y_val);
+    }
+
+    if (lane == 0 && rowid < n)
+    { 
+         dy[rowid] = y_val;
+    }
+}
+

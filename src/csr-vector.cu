@@ -6,58 +6,6 @@
 #include <string>
 #include "sparseMatrix.h"
 
-template<typename T>
-__device__ T warp_reduction(T val)
-{
-#define warpSize 32
-
-    for (auto offset = warpSize / 2; offset > 0; offset /= 2)
-    {
-        val += __shfl_down_sync(0, val, offset, warpSize);
-    }
-    return val;
-}
-
-template<typename T>
-__global__ void spMulAdd_scalar(const int * __restrict__ row, const int * __restrict__ col, const T * __restrict__ val, const T * __restrict__ dx, T * __restrict__ dy, int n, int nnz)
-{
-    auto tid = threadIdx.x + blockIdx.x * blockDim.x; 
-    T y_val = 0.0;
-    if (tid < n)
-    {
-         #pragma unroll
-         for (auto j = row[tid]; j < row[tid + 1]; ++j) 
-         {
-              y_val += val[j] * dx[col[j]];
-         }
-         dy[tid] = y_val;
-    }
-}
-
-//kernel
-template<typename T>
-__global__ void spMulAdd_vector(const int * __restrict__ row, const int * __restrict__ col, const T * __restrict__ val, const T * __restrict__ dx, T * __restrict__ dy, int n, int nnz)
-{
-    auto tid = threadIdx.x + blockIdx.x * blockDim.x; 
-    auto rowid = tid / warpSize;
-    auto lane = tid % warpSize;
-    T y_val = 0;
-    
-    if (rowid < n)
-    {
-         for (auto i = row[rowid] + lane; i < row[rowid + 1]; i += warpSize) 
-         {
-              y_val += val[i] * dx[col[i]];
-         }
-         y_val = warp_reduction<T>(y_val);
-    }
-
-    if (lane == 0 && rowid < n)
-    { 
-         dy[rowid] = y_val;
-    }
-}
-
 int main(int args, char *argv[])
 {
     // 読み込みたい行列は実行時引数で与える
@@ -105,7 +53,7 @@ int main(int args, char *argv[])
     start = std::chrono::system_clock::now();
 
     // 計算するところ
-    spMulAdd_vector<float> <<<grid, block>>>(row, col, val, vec_x, vec_y, n, nnz);
+    sp.spMulAdd_vector<float> <<<grid, block>>>(vec_x, vec_y);
 
     end = std::chrono::system_clock::now();
 

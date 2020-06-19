@@ -15,50 +15,11 @@ public:
   std::vector<float> val;
   std::unique_ptr<float[]> matrix;
 
-  sparseMatrix();
   sparseMatrix(std::string fname);
   void residual(const float * __restrict__ x, const float * __restrict__ y, float * __restrict__ answer);
    
   //TODO: 行列ベクトル積とか基本演算実装しとく？
 };
-
-  sparseMatrix::sparseMatrix()
-  {
-    m = 500;
-    n = 500;
-    nnz = 0.5;
-
-    matrix.reset(new float[m * n]);
-    for (auto i = 0; i < m * n; i++)
-    {
-        if (static_cast<double>(std::rand()) / RAND_MAX < nnz)
-        {
-          matrix[i] = 1;
-        }
-        else
-        {
-          matrix[i] = 0;
-        }
-    } 
-
-    // sparse (csr) を作るところ
-    row.reset(new int[n + 1]);
-    auto nnz_count = 0;
-    row[0] = nnz_count;
-    for (auto i = 0; i < n; i++)
-    {
-      for (auto j = 0; j < n; j++)
-      {
-         if (matrix[i * n + j] != 0)
-         {
-            val.push_back(matrix[i * n + j]);
-            col.push_back(j);
-            nnz_count++;
-         }
-      } 
-      row[i + 1] = nnz_count;
-      } 
-  }
   
   sparseMatrix::sparseMatrix(std::string fname)
   {

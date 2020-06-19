@@ -75,7 +75,8 @@ int main(int args, char *argv[])
 
     for (auto i = 0; i < n; i++)
     {
-        host_x[i] = static_cast<float>(rand()) / RAND_MAX;
+        //host_x[i] = static_cast<float>(rand()) / RAND_MAX;
+        host_x[i] = 1;
         host_y[i] = 0;
     }
 
@@ -128,7 +129,7 @@ int main(int args, char *argv[])
     {
         // float で誤差含めてだいたいこのくらい合ってれば正しい？
         auto m = 7 - std::log10(n);
-        if (fabs(host_result[i] - result[i]) > std::pow(10, -2))
+        if (fabs(host_result[i] - result[i]) > std::pow(10, -m))
         {
             // 基準を満たさなかったら NG
             std::cout << "ng: " << fabs(host_result[i] - result[i]) << std::endl;

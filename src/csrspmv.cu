@@ -185,6 +185,7 @@ int main(int args, char *argv[])
     const auto flops = 2 * nnz * n;
     const auto bytes = (n + 1) * sizeof(int) + nnz * sizeof(float) + nnz * sizeof(int) + 3 * n * sizeof(float);
 
+    std::cout << "matrix: " << fname << std::endl;
     std::cout << "n: " << n << ", nnz: " << nnz << ", threads: " << blocksize << std::endl;
     std::cout << "time: " << time << " [ms]" << std::endl;
     std::cout << "time(cublas): " << time_cublas << " [ms]" << std::endl;

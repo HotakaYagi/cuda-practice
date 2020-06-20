@@ -29,6 +29,10 @@ public:
     
     while (fin.peek() == '%') fin.ignore(2048, '\n');
     fin >> m >> n >> nnz;
+    if (m != n)
+    {
+        std::cout << "EROOR!" << std::endl;
+    }
   
     matrix.reset(new float[m * n]);
     for (auto i = 0; i < m * n; i++)

@@ -5,10 +5,10 @@
 #include <vector>
 #include <string>
 #include "sparseMatrix.h"
-#include<cuda_runtime_api.h>
-#include<cublas_v2.h>
-#include<cusparse_v2.h>
-#include<thrust/device_vector.h>
+#include <cuda_runtime_api.h>
+#include <cublas_v2.h>
+#include <cusparse_v2.h>
+#include <thrust/device_vector.h>
 
 template<typename T>
 __device__ T warp_reduction(T val)
@@ -150,15 +150,48 @@ int main(int args, char *argv[])
         std::cout << "ng" << std::endl;
     }
 
+
+    // cuSPARSE
+    ::cusparseHandle_t cusparse;
+    ::cusparseCreate(&cusparse);
+
+    ::cusparseMatDescr_t matDescr;
+    ::cusparseCreateMatDescr(&matDescr);
+    ::cusparseSetMatType(matDescr, CUSPARSE_MATRIX_TYPE_GENERAL);
+    ::cusparseSetMatIndexBase(matDescr, CUSPARSE_INDEX_BASE_ZERO);
+
+    thrust::device_vector<float> result_cu(n);
+    thrust::copy_n(host_y.get(), n, result_cu.begin());
+    float* result_cuPtr = thrust::raw_pointer_cast(&(result_cu[0]));
+    const float ALPHA = 1;
+    const float BETA = 0;
+
+    std::chrono::system_clock::time_point start_cublas, end_cublas;
+    start_cublas = std::chrono::system_clock::now();
+
+    ::cusparseScsrmv(cusparse, CUSPARSE_OPERATION_NON_TRANSPOSE,
+        n, n, nnz,
+        &ALPHA, matDescr, valPtr, rowPtr, colPtr,
+        vec_xPtr,
+        &BETA, result_cuPtr);
+
+    end_cublas = std::chrono::system_clock::now();
+    std::unique_ptr<float[]> result_cu_host(new float[n]);
+    thrust::copy_n(result_cu.begin(), n, result_cu_host.get());
+
     // 計算時間(データ転送含めない？)や次数、実効性能を出力
     const auto time = static_cast<double>(std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() / 1000.0);
+    const auto time_cublas = static_cast<double>(std::chrono::duration_cast<std::chrono::microseconds>(end_cublas - start_cublas).count() / 1000.0);
     const auto flops = 2 * nnz * n;
     const auto bytes = (n + 1) * sizeof(int) + nnz * sizeof(float) + nnz * sizeof(int) + 3 * n * sizeof(float);
 
     std::cout << "n: " << n << ", nnz: " << nnz << ", threads: " << blocksize << std::endl;
     std::cout << "time: " << time << " [ms]" << std::endl;
+    std::cout << "time(cublas): " << time_cublas << " [ms]" << std::endl;
     std::cout << "perf: " << flops / time / 1e6 << " [Gflops/sec]" << std::endl;
+    std::cout << "perf(cublas): " << flops / time_cublas / 1e6 << " [Gflops/sec]" << std::endl;
     std::cout << "perf: " << bytes / time / 1e6 << " [Gbytes/sec]" << std::endl;
+    std::cout << "perf(cublas): " << bytes / time_cublas / 1e6 << " [Gbytes/sec]" << std::endl;
     std::cout << "residual norm 2: " << residual / y_norm << std::endl;
 
     return 0;

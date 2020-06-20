@@ -108,7 +108,7 @@ int main(int args, char *argv[])
     const dim3 block(blocksize, 1, 1);
     const dim3 grid(warpSize * std::ceil(n / static_cast<float>(block.x)), 1, 1);
     
-    // 時間計測するところ、データ転送は含まなくてok?
+    // 時間計測するところ
     std::chrono::system_clock::time_point start, end;
     start = std::chrono::system_clock::now();
 
@@ -140,7 +140,7 @@ int main(int args, char *argv[])
     }
     
     // float で誤差含めてだいたいこのくらい合ってれば正しい？
-    auto m = 7 - std::log10(n);
+    const auto m = 7 - std::log10(n);
     if (residual / y_norm < m)
     {
         std::cout << "ok" << std::endl;
@@ -152,10 +152,13 @@ int main(int args, char *argv[])
 
     // 計算時間(データ転送含めない？)や次数、実効性能を出力
     const auto time = static_cast<double>(std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() / 1000.0);
+    const auto flops = 2 * nnz * n;
+    const auto bytes = (n + 1) * sizeof(int) + nnz * sizeof(float) + nnz * sizeof(int) + 3 * n * sizeof(float);
 
     std::cout << "n: " << n << ", nnz: " << nnz << ", threads: " << blocksize << std::endl;
     std::cout << "time: " << time << " [ms]" << std::endl;
-    std::cout << "perf: " << 2 * n * n / time / 1e6 << " [Gflops/sec]" << std::endl;
+    std::cout << "perf: " << flops / time / 1e6 << " [Gflops/sec]" << std::endl;
+    std::cout << "perf: " << bytes / time / 1e6 << " [Gbytes/sec]" << std::endl;
     std::cout << "residual norm 2: " << residual / y_norm << std::endl;
 
     return 0;

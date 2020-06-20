@@ -5,6 +5,10 @@
 #include <vector>
 #include <string>
 #include "sparseMatrix.h"
+#include<cuda_runtime_api.h>
+#include<cublas_v2.h>
+#include<cusparse_v2.h>
+#include<thrust/device_vector.h>
 
 template<typename T>
 __device__ T warp_reduction(T val)
@@ -80,21 +84,24 @@ int main(int args, char *argv[])
         host_y[i] = 0;
     }
 
-    // gpu に渡すところ
-    int *row, *col; 
-    float *val, *vec_x, *vec_y;
+    // gpu用ので配列を生成
+    thrust::device_vector<int> row(n + 1);
+    thrust::device_vector<int> col(nnz);
+    thrust::device_vector<float> val(nnz);
+    thrust::device_vector<float> vec_x(n);
+    thrust::device_vector<float> vec_y(n);
 
-    cudaMalloc((void**)&row, (n + 1) * sizeof(int));
-    cudaMalloc((void**)&col, nnz * sizeof(int));
-    cudaMalloc((void**)&val, nnz * sizeof(float));
-    cudaMalloc((void**)&vec_x, n * sizeof(float));
-    cudaMalloc((void**)&vec_y, n * sizeof(float));
+    thrust::copy_n(sp.row.get(), n + 1, row.begin());
+    thrust::copy_n(sp.col.begin(), nnz, col.begin());
+    thrust::copy_n(sp.val.begin(), nnz, val.begin());
+    thrust::copy_n(host_x.get(), n, vec_x.begin());
+    thrust::copy_n(host_y.get(), n, vec_y.begin());
 
-    cudaMemcpy(row, sp.row.get(), (n + 1) * sizeof(int), cudaMemcpyHostToDevice);
-    cudaMemcpy(col, sp.col.data(), nnz * sizeof(int), cudaMemcpyHostToDevice);
-    cudaMemcpy(val, sp.val.data(), nnz * sizeof(float), cudaMemcpyHostToDevice);
-    cudaMemcpy(vec_x, host_x.get(), n * sizeof(float), cudaMemcpyHostToDevice);
-    cudaMemcpy(vec_y, host_y.get(), n * sizeof(float), cudaMemcpyHostToDevice);
+    int* rowPtr = thrust::raw_pointer_cast(&(row[0]));
+    int* colPtr = thrust::raw_pointer_cast(&(col[0]));
+    float* valPtr = thrust::raw_pointer_cast(&(val[0]));
+    float* vec_xPtr = thrust::raw_pointer_cast(&(vec_x[0]));
+    float* vec_yPtr = thrust::raw_pointer_cast(&(vec_y[0]));
 
     // スレッドサイズはどう決めるのがよいのだろうか?
     const auto blocksize = 64;
@@ -106,13 +113,13 @@ int main(int args, char *argv[])
     start = std::chrono::system_clock::now();
 
     // 計算するところ
-    spMulAdd_vector<float> <<<grid, block>>>(row, col, val, vec_x, vec_y, n, nnz);
+    spMulAdd_vector<float> <<<grid, block>>>(rowPtr, colPtr, valPtr, vec_xPtr, vec_yPtr, n, nnz);
 
     end = std::chrono::system_clock::now();
 
     // 結果があっているかcpuでも計算して確認するところ
     std::unique_ptr<float[]> result(new float[n]);
-    cudaMemcpy(result.get(), vec_y, n * sizeof(n), cudaMemcpyDeviceToHost);
+    thrust::copy_n(vec_y.begin(), n, result.get());
 
     std::unique_ptr<float[]> host_result(new float[n]);
     for (auto i = 0; i < n; i++)
@@ -124,22 +131,23 @@ int main(int args, char *argv[])
         }
     }
 
-    auto checker = 0;
+    auto residual = 0;
+    auto y_norm = 0;
     for (auto i = 0; i < n; i++)
     {
-        // float で誤差含めてだいたいこのくらい合ってれば正しい？
-        auto m = 7 - std::log10(n);
-        if (fabs(host_result[i] - result[i]) > std::pow(10, -m))
-        {
-            // 基準を満たさなかったら NG
-            std::cout << "ng: " << fabs(host_result[i] - result[i]) << std::endl;
-            checker++;
-        }
+        residual += std::pow(host_result[i] - result[i], 2);
+        y_norm += std::pow(result[i], 2);
     }
     
-    if (checker == 0)
+    // float で誤差含めてだいたいこのくらい合ってれば正しい？
+    auto m = 7 - std::log10(n);
+    if (residual / y_norm < m)
     {
         std::cout << "ok" << std::endl;
+    }
+    else
+    {
+        std::cout << "ng" << std::endl;
     }
 
     // 計算時間(データ転送含めない？)や次数、実効性能を出力
@@ -148,12 +156,7 @@ int main(int args, char *argv[])
     std::cout << "n: " << n << ", nnz: " << nnz << ", threads: " << blocksize << std::endl;
     std::cout << "time: " << time << " [ms]" << std::endl;
     std::cout << "perf: " << 2 * n * n / time / 1e6 << " [Gflops/sec]" << std::endl;
-
-    cudaFree(row);
-    cudaFree(col);
-    cudaFree(val);
-    cudaFree(vec_x);
-    cudaFree(vec_y);
+    std::cout << "residual norm 2: " << residual / y_norm << std::endl;
 
     return 0;
 }

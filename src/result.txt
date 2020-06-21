@@ -1,29 +1,20 @@
 ok
 n: 468, nnz: 2820, threads: 64
-time: 0.014 [ms]
-time(cublas): 0.021 [ms]
-perf: 188.537 [Gflops/sec]
-perf(cublas): 125.691 [Gflops/sec]
-perf: 2.14657 [Gbytes/sec]
-perf(cublas): 1.43105 [Gbytes/sec]
+time: 0.005 [ms]
+time(cublas): 0.026 [ms]
+perf: 527.904 [Gflops/sec]
+perf(cublas): 101.52 [Gflops/sec]
+perf: 6.0104 [Gbytes/sec]
+perf(cublas): 1.15585 [Gbytes/sec]
 residual norm 2: 0
 ok
 n: 1138, nnz: 2596, threads: 64
-time: 0.014 [ms]
-time(cublas): 0.023 [ms]
-perf: 422.035 [Gflops/sec]
-perf(cublas): 256.891 [Gflops/sec]
-perf: 2.78429 [Gbytes/sec]
-perf(cublas): 1.69478 [Gbytes/sec]
-residual norm 2: 0
-ok
-n: 634, nnz: 3931, threads: 64
 time: 0.013 [ms]
-time(cublas): 0.022 [ms]
-perf: 383.424 [Gflops/sec]
-perf(cublas): 226.569 [Gflops/sec]
-perf: 3.19969 [Gbytes/sec]
-perf(cublas): 1.89073 [Gbytes/sec]
+time(cublas): 0.021 [ms]
+perf: 454.5 [Gflops/sec]
+perf(cublas): 281.357 [Gflops/sec]
+perf: 2.99846 [Gbytes/sec]
+perf(cublas): 1.85619 [Gbytes/sec]
 residual norm 2: 0
 ok
 n: 494, nnz: 1080, threads: 64
@@ -37,108 +28,189 @@ residual norm 2: 0
 ok
 n: 662, nnz: 1568, threads: 64
 time: 0.005 [ms]
-time(cublas): 0.022 [ms]
+time(cublas): 0.023 [ms]
 perf: 415.206 [Gflops/sec]
-perf(cublas): 94.3651 [Gflops/sec]
+perf(cublas): 90.2623 [Gflops/sec]
 perf: 4.628 [Gbytes/sec]
-perf(cublas): 1.05182 [Gbytes/sec]
-residual norm 2: 0
-ok
-n: 85, nnz: 304, threads: 64
-time: 0.014 [ms]
-time(cublas): 0.021 [ms]
-perf: 3.69143 [Gflops/sec]
-perf(cublas): 2.46095 [Gflops/sec]
-perf: 0.271143 [Gbytes/sec]
-perf(cublas): 0.180762 [Gbytes/sec]
+perf(cublas): 1.00609 [Gbytes/sec]
 residual norm 2: 0
 ok
 n: 49, nnz: 108, threads: 64
 time: 0.014 [ms]
-time(cublas): 0.022 [ms]
+time(cublas): 0.021 [ms]
 perf: 0.756 [Gflops/sec]
-perf(cublas): 0.481091 [Gflops/sec]
+perf(cublas): 0.504 [Gflops/sec]
 perf: 0.118 [Gbytes/sec]
-perf(cublas): 0.0750909 [Gbytes/sec]
+perf(cublas): 0.0786667 [Gbytes/sec]
 residual norm 2: 0
 ok
 n: 1086, nnz: 11578, threads: 64
-time: 0.005 [ms]
-time(cublas): 0.022 [ms]
-perf: 5029.48 [Gflops/sec]
-perf(cublas): 1143.06 [Gflops/sec]
-perf: 22.0008 [Gbytes/sec]
-perf(cublas): 5.00018 [Gbytes/sec]
+time: 0.006 [ms]
+time(cublas): 0.02 [ms]
+perf: 4191.24 [Gflops/sec]
+perf(cublas): 1257.37 [Gflops/sec]
+perf: 18.334 [Gbytes/sec]
+perf(cublas): 5.5002 [Gbytes/sec]
 residual norm 2: 0
 ok
 n: 1074, nnz: 1074, threads: 64
 time: 0.005 [ms]
-time(cublas): 0.021 [ms]
+time(cublas): 0.023 [ms]
 perf: 461.39 [Gflops/sec]
-perf(cublas): 109.855 [Gflops/sec]
+perf(cublas): 100.302 [Gflops/sec]
 perf: 5.156 [Gbytes/sec]
-perf(cublas): 1.22762 [Gbytes/sec]
-residual norm 2: 0
-ok
-n: 1074, nnz: 1074, threads: 64
-time: 0.005 [ms]
-time(cublas): 0.021 [ms]
-perf: 461.39 [Gflops/sec]
-perf(cublas): 109.855 [Gflops/sec]
-perf: 5.156 [Gbytes/sec]
-perf(cublas): 1.22762 [Gbytes/sec]
+perf(cublas): 1.12087 [Gbytes/sec]
 residual norm 2: 0
 ok
 n: 317, nnz: 7327, threads: 64
 time: 0.005 [ms]
-time(cublas): 0.022 [ms]
+time(cublas): 0.027 [ms]
 perf: 929.064 [Gflops/sec]
-perf(cublas): 211.151 [Gflops/sec]
+perf(cublas): 172.049 [Gflops/sec]
 perf: 12.7384 [Gbytes/sec]
-perf(cublas): 2.89509 [Gbytes/sec]
+perf(cublas): 2.35896 [Gbytes/sec]
 residual norm 2: 0
 ok
 n: 961, nnz: 4681, threads: 64
-time: 0.013 [ms]
-time(cublas): 0.03 [ms]
-perf: 692.068 [Gflops/sec]
-perf(cublas): 299.896 [Gflops/sec]
-perf: 4.06369 [Gbytes/sec]
-perf(cublas): 1.76093 [Gbytes/sec]
-residual norm 2: 0
-ok
-n: 961, nnz: 4681, threads: 64
-time: 0.013 [ms]
-time(cublas): 0.03 [ms]
-perf: 692.068 [Gflops/sec]
-perf(cublas): 299.896 [Gflops/sec]
-perf: 4.06369 [Gbytes/sec]
-perf(cublas): 1.76093 [Gbytes/sec]
+time: 0.005 [ms]
+time(cublas): 0.02 [ms]
+perf: 1799.38 [Gflops/sec]
+perf(cublas): 449.844 [Gflops/sec]
+perf: 10.5656 [Gbytes/sec]
+perf(cublas): 2.6414 [Gbytes/sec]
 residual norm 2: 0
 ok
 n: 2048, nnz: 10114, threads: 64
-time: 0.013 [ms]
-time(cublas): 0.025 [ms]
-perf: 3186.69 [Gflops/sec]
-perf(cublas): 1657.08 [Gflops/sec]
-perf: 8.74492 [Gbytes/sec]
-perf(cublas): 4.54736 [Gbytes/sec]
+time: 0.005 [ms]
+time(cublas): 0.023 [ms]
+perf: 8285.39 [Gflops/sec]
+perf(cublas): 1801.17 [Gflops/sec]
+perf: 22.7368 [Gbytes/sec]
+perf(cublas): 4.94278 [Gbytes/sec]
 residual norm 2: 0
 ok
 n: 236, nnz: 5856, threads: 64
-time: 0.013 [ms]
-time(cublas): 0.022 [ms]
-perf: 212.618 [Gflops/sec]
-perf(cublas): 125.638 [Gflops/sec]
-perf: 3.89446 [Gbytes/sec]
-perf(cublas): 2.30127 [Gbytes/sec]
+time: 0.005 [ms]
+time(cublas): 0.023 [ms]
+perf: 552.806 [Gflops/sec]
+perf(cublas): 120.175 [Gflops/sec]
+perf: 10.1256 [Gbytes/sec]
+perf(cublas): 2.20122 [Gbytes/sec]
 residual norm 2: 0
 ok
 n: 900, nnz: 4322, threads: 64
-time: 0.005 [ms]
+time: 0.013 [ms]
 time(cublas): 0.022 [ms]
-perf: 1555.92 [Gflops/sec]
+perf: 598.431 [Gflops/sec]
 perf(cublas): 353.618 [Gflops/sec]
-perf: 9.796 [Gbytes/sec]
+perf: 3.76769 [Gbytes/sec]
 perf(cublas): 2.22636 [Gbytes/sec]
+residual norm 2: 0
+ok
+n: 1224, nnz: 28675, threads: 64
+time: 0.014 [ms]
+time(cublas): 0.021 [ms]
+perf: 5014.03 [Gflops/sec]
+perf(cublas): 3342.69 [Gflops/sec]
+perf: 17.7849 [Gbytes/sec]
+perf(cublas): 11.8566 [Gbytes/sec]
+residual norm 2: 0
+ok
+n: 1224, nnz: 28675, threads: 64
+time: 0.014 [ms]
+time(cublas): 0.021 [ms]
+perf: 5014.03 [Gflops/sec]
+perf(cublas): 3342.69 [Gflops/sec]
+perf: 17.7849 [Gbytes/sec]
+perf(cublas): 11.8566 [Gbytes/sec]
+residual norm 2: 0
+ok
+n: 656, nnz: 3884, threads: 64
+time: 0.005 [ms]
+time(cublas): 0.023 [ms]
+perf: 1019.16 [Gflops/sec]
+perf(cublas): 221.557 [Gflops/sec]
+perf: 8.3144 [Gbytes/sec]
+perf(cublas): 1.80748 [Gbytes/sec]
+residual norm 2: 0
+ok
+n: 2500, nnz: 12349, threads: 64
+time: 0.014 [ms]
+time(cublas): 0.028 [ms]
+perf: 4410.36 [Gflops/sec]
+perf(cublas): 2205.18 [Gflops/sec]
+perf: 9.914 [Gbytes/sec]
+perf(cublas): 4.957 [Gbytes/sec]
+residual norm 2: 0
+ok
+n: 4241, nnz: 131556, threads: 64
+time: 0.016 [ms]
+time(cublas): 0.021 [ms]
+perf: 69741.1 [Gflops/sec]
+perf(cublas): 53136.1 [Gflops/sec]
+perf: 70.0192 [Gbytes/sec]
+perf(cublas): 53.348 [Gbytes/sec]
+residual norm 2: 0
+ok
+n: 4241, nnz: 131556, threads: 64
+time: 0.016 [ms]
+time(cublas): 0.021 [ms]
+perf: 69741.1 [Gflops/sec]
+perf(cublas): 53136.1 [Gflops/sec]
+perf: 70.0192 [Gbytes/sec]
+perf(cublas): 53.348 [Gbytes/sec]
+residual norm 2: 0
+ok
+n: 760, nnz: 5976, threads: 64
+time: 0.013 [ms]
+time(cublas): 0.022 [ms]
+perf: 698.732 [Gflops/sec]
+perf(cublas): 412.887 [Gflops/sec]
+perf: 4.61323 [Gbytes/sec]
+perf(cublas): 2.726 [Gbytes/sec]
+residual norm 2: 0
+ok
+n: 425, nnz: 1339, threads: 64
+time: 0.005 [ms]
+time(cublas): 0.025 [ms]
+perf: 227.63 [Gflops/sec]
+perf(cublas): 45.526 [Gflops/sec]
+perf: 3.5032 [Gbytes/sec]
+perf(cublas): 0.70064 [Gbytes/sec]
+residual norm 2: 0
+ok
+n: 450, nnz: 2580, threads: 64
+time: 0.014 [ms]
+time(cublas): 0.021 [ms]
+perf: 165.857 [Gflops/sec]
+perf(cublas): 110.571 [Gflops/sec]
+perf: 1.98886 [Gbytes/sec]
+perf(cublas): 1.3259 [Gbytes/sec]
+residual norm 2: 0
+ok
+n: 450, nnz: 2580, threads: 64
+time: 0.014 [ms]
+time(cublas): 0.021 [ms]
+perf: 165.857 [Gflops/sec]
+perf(cublas): 110.571 [Gflops/sec]
+perf: 1.98886 [Gbytes/sec]
+perf(cublas): 1.3259 [Gbytes/sec]
+residual norm 2: 0
+ok
+n: 989, nnz: 3537, threads: 64
+time: 0.005 [ms]
+time(cublas): 0.024 [ms]
+perf: 1399.24 [Gflops/sec]
+perf(cublas): 291.508 [Gflops/sec]
+perf: 8.8248 [Gbytes/sec]
+perf(cublas): 1.8385 [Gbytes/sec]
+residual norm 2: 0
+ok
+n: 2873, nnz: 15032, threads: 64
+time: 0.005 [ms]
+time(cublas): 0.023 [ms]
+perf: 17274.8 [Gflops/sec]
+perf(cublas): 3755.39 [Gflops/sec]
+perf: 33.2456 [Gbytes/sec]
+perf(cublas): 7.2273 [Gbytes/sec]
 residual norm 2: 0

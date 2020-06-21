@@ -182,7 +182,7 @@ int main(int args, char *argv[])
     // 計算時間(データ転送含めない？)や次数、実効性能を出力
     const auto time = static_cast<double>(std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() / 1000.0);
     const auto time_cublas = static_cast<double>(std::chrono::duration_cast<std::chrono::microseconds>(end_cublas - start_cublas).count() / 1000.0);
-    const auto flops = 2 * nnz * n;
+    const auto flops = 2 * n * n;
     const auto bytes = (n + 1) * sizeof(int) + nnz * sizeof(float) + nnz * sizeof(int) + 3 * n * sizeof(float);
 
     std::cout << "matrix: " << fname << std::endl;

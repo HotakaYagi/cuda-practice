@@ -16,6 +16,7 @@ for matrix in matrixList:
         print 'Error.'
     result.append(res)
 
-with open('./result.txt', mode='w') as f:
+with open('./result.csv', mode='w') as f:
+    f.write("matrix,time,time(cublas),flop,flop(cublas),byte,byte(cublas)\n")
     for res in result: 
         f.write(res)

@@ -104,7 +104,7 @@ int main(int args, char *argv[])
     float* vec_yPtr = thrust::raw_pointer_cast(&(vec_y[0]));
 
     // スレッドサイズはどう決めるのがよいのだろうか?
-    const auto blocksize = 64;
+    const auto blocksize = 128;
     const dim3 block(blocksize, 1, 1);
     const dim3 grid(warpSize * std::ceil(n / static_cast<float>(block.x)), 1, 1);
     
@@ -140,6 +140,7 @@ int main(int args, char *argv[])
     }
     
     // float で誤差含めてだいたいこのくらい合ってれば正しい？
+    /*
     const auto m = 7 - std::log10(n);
     if (residual / y_norm < m)
     {
@@ -149,7 +150,7 @@ int main(int args, char *argv[])
     {
         std::cout << "ng" << std::endl;
     }
-
+    */
 
     // cuSPARSE
     ::cusparseHandle_t cusparse;
@@ -184,7 +185,7 @@ int main(int args, char *argv[])
     const auto time_cublas = static_cast<double>(std::chrono::duration_cast<std::chrono::microseconds>(end_cublas - start_cublas).count() / 1000.0);
     const auto flops = 2 * nnz;
     const auto bytes = (n + 1) * sizeof(int) + nnz * sizeof(float) + nnz * sizeof(int) + 3 * n * sizeof(float);
-
+/*
     std::cout << "matrix: " << fname << std::endl;
     std::cout << "n: " << n << ", nnz: " << nnz << ", threads: " << blocksize << std::endl;
     std::cout << "time: " << time << " [ms]" << std::endl;
@@ -194,7 +195,9 @@ int main(int args, char *argv[])
     std::cout << "perf: " << bytes / time / 1e6 << " [Gbytes/sec]" << std::endl;
     std::cout << "perf(cublas): " << bytes / time_cublas / 1e6 << " [Gbytes/sec]" << std::endl;
     std::cout << "residual norm 2: " << residual / y_norm << std::endl;
+*/
 
+    std::cout << fname << "," << time << "," << time_cublas << "," << flops / time / 1e6 << "," << flops / time_cublas / 1e6 << "," << bytes / time / 1e6 << "," << bytes / time_cublas / 1e6 << std::endl; 
     return 0;
 }
 

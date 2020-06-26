@@ -38,7 +38,6 @@ __global__ void spMulAdd_scalar(const int * __restrict__ row, const int * __rest
     }
 }
 
-//kernel
 template<typename T>
 __global__ void spMulAdd_vector(const int * __restrict__ row, const int * __restrict__ col, const T * __restrict__ val, const T * __restrict__ dx, T * __restrict__ dy, int n, int nnz)
 {
@@ -49,6 +48,7 @@ __global__ void spMulAdd_vector(const int * __restrict__ row, const int * __rest
     
     if (rowid < n)
     {
+         #pragma unroll
          for (auto i = row[rowid] + lane; i < row[rowid + 1]; i += warpSize) 
          {
               y_val += val[i] * dx[col[i]];
@@ -182,7 +182,7 @@ int main(int args, char *argv[])
     // 計算時間(データ転送含めない？)や次数、実効性能を出力
     const auto time = static_cast<double>(std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() / 1000.0);
     const auto time_cublas = static_cast<double>(std::chrono::duration_cast<std::chrono::microseconds>(end_cublas - start_cublas).count() / 1000.0);
-    const auto flops = 2 * n * n;
+    const auto flops = 2 * nnz;
     const auto bytes = (n + 1) * sizeof(int) + nnz * sizeof(float) + nnz * sizeof(int) + 3 * n * sizeof(float);
 
     std::cout << "matrix: " << fname << std::endl;

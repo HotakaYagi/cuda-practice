@@ -1,216 +1,210 @@
 ok
+matrix: ../matrix/nos5.mtx
 n: 468, nnz: 2820, threads: 64
-time: 0.005 [ms]
-time(cublas): 0.026 [ms]
-perf: 527.904 [Gflops/sec]
-perf(cublas): 101.52 [Gflops/sec]
-perf: 6.0104 [Gbytes/sec]
-perf(cublas): 1.15585 [Gbytes/sec]
-residual norm 2: 0
-ok
-n: 1138, nnz: 2596, threads: 64
 time: 0.013 [ms]
-time(cublas): 0.021 [ms]
-perf: 454.5 [Gflops/sec]
-perf(cublas): 281.357 [Gflops/sec]
-perf: 2.99846 [Gbytes/sec]
-perf(cublas): 1.85619 [Gbytes/sec]
+time(cublas): 0.022 [ms]
+perf: 0.433846 [Gflops/sec]
+perf(cublas): 0.256364 [Gflops/sec]
+perf: 2.31169 [Gbytes/sec]
+perf(cublas): 1.366 [Gbytes/sec]
 residual norm 2: 0
 ok
-n: 494, nnz: 1080, threads: 64
+matrix: ../matrix/1138_bus.mtx
+n: 1138, nnz: 2596, threads: 64
 time: 0.005 [ms]
+time(cublas): 0.023 [ms]
+perf: 1.0384 [Gflops/sec]
+perf(cublas): 0.225739 [Gflops/sec]
+perf: 7.796 [Gbytes/sec]
+perf(cublas): 1.69478 [Gbytes/sec]
+residual norm 2: 0
+ok
+matrix: ../matrix/494_bus.mtx
+n: 494, nnz: 1080, threads: 64
+time: 0.014 [ms]
 time(cublas): 0.022 [ms]
-perf: 213.408 [Gflops/sec]
-perf(cublas): 48.5018 [Gflops/sec]
-perf: 3.3096 [Gbytes/sec]
+perf: 0.154286 [Gflops/sec]
+perf(cublas): 0.0981818 [Gflops/sec]
+perf: 1.182 [Gbytes/sec]
 perf(cublas): 0.752182 [Gbytes/sec]
 residual norm 2: 0
 ok
+matrix: ../matrix/662_bus.mtx
 n: 662, nnz: 1568, threads: 64
-time: 0.005 [ms]
-time(cublas): 0.023 [ms]
-perf: 415.206 [Gflops/sec]
-perf(cublas): 90.2623 [Gflops/sec]
-perf: 4.628 [Gbytes/sec]
-perf(cublas): 1.00609 [Gbytes/sec]
+time: 0.013 [ms]
+time(cublas): 0.022 [ms]
+perf: 0.241231 [Gflops/sec]
+perf(cublas): 0.142545 [Gflops/sec]
+perf: 1.78 [Gbytes/sec]
+perf(cublas): 1.05182 [Gbytes/sec]
 residual norm 2: 0
 ok
+matrix: ../matrix/bcspwr02.mtx
 n: 49, nnz: 108, threads: 64
-time: 0.014 [ms]
-time(cublas): 0.021 [ms]
-perf: 0.756 [Gflops/sec]
-perf(cublas): 0.504 [Gflops/sec]
-perf: 0.118 [Gbytes/sec]
-perf(cublas): 0.0786667 [Gbytes/sec]
+time: 0.005 [ms]
+time(cublas): 0.029 [ms]
+perf: 0.0432 [Gflops/sec]
+perf(cublas): 0.00744828 [Gflops/sec]
+perf: 0.3304 [Gbytes/sec]
+perf(cublas): 0.0569655 [Gbytes/sec]
 residual norm 2: 0
 ok
+matrix: ../matrix/bcsstk10.mtx
 n: 1086, nnz: 11578, threads: 64
-time: 0.006 [ms]
-time(cublas): 0.02 [ms]
-perf: 4191.24 [Gflops/sec]
-perf(cublas): 1257.37 [Gflops/sec]
-perf: 18.334 [Gbytes/sec]
-perf(cublas): 5.5002 [Gbytes/sec]
+time: 0.015 [ms]
+time(cublas): 0.023 [ms]
+perf: 1.54373 [Gflops/sec]
+perf(cublas): 1.00678 [Gflops/sec]
+perf: 7.3336 [Gbytes/sec]
+perf(cublas): 4.78278 [Gbytes/sec]
 residual norm 2: 0
 ok
+matrix: ../matrix/bcsstm08.mtx
 n: 1074, nnz: 1074, threads: 64
 time: 0.005 [ms]
-time(cublas): 0.023 [ms]
-perf: 461.39 [Gflops/sec]
-perf(cublas): 100.302 [Gflops/sec]
+time(cublas): 0.024 [ms]
+perf: 0.4296 [Gflops/sec]
+perf(cublas): 0.0895 [Gflops/sec]
 perf: 5.156 [Gbytes/sec]
-perf(cublas): 1.12087 [Gbytes/sec]
+perf(cublas): 1.07417 [Gbytes/sec]
 residual norm 2: 0
 ok
+matrix: ../matrix/cavity02.mtx
 n: 317, nnz: 7327, threads: 64
-time: 0.005 [ms]
-time(cublas): 0.027 [ms]
-perf: 929.064 [Gflops/sec]
-perf(cublas): 172.049 [Gflops/sec]
-perf: 12.7384 [Gbytes/sec]
-perf(cublas): 2.35896 [Gbytes/sec]
+time: 0.013 [ms]
+time(cublas): 0.022 [ms]
+perf: 1.12723 [Gflops/sec]
+perf(cublas): 0.666091 [Gflops/sec]
+perf: 4.89938 [Gbytes/sec]
+perf(cublas): 2.89509 [Gbytes/sec]
 residual norm 2: 0
 ok
+matrix: ../matrix/cdde4.mtx
 n: 961, nnz: 4681, threads: 64
-time: 0.005 [ms]
-time(cublas): 0.02 [ms]
-perf: 1799.38 [Gflops/sec]
-perf(cublas): 449.844 [Gflops/sec]
-perf: 10.5656 [Gbytes/sec]
-perf(cublas): 2.6414 [Gbytes/sec]
+time: 0.014 [ms]
+time(cublas): 0.021 [ms]
+perf: 0.668714 [Gflops/sec]
+perf(cublas): 0.44581 [Gflops/sec]
+perf: 3.77343 [Gbytes/sec]
+perf(cublas): 2.51562 [Gbytes/sec]
 residual norm 2: 0
 ok
+matrix: ../matrix/dw2048.mtx
 n: 2048, nnz: 10114, threads: 64
-time: 0.005 [ms]
-time(cublas): 0.023 [ms]
-perf: 8285.39 [Gflops/sec]
-perf(cublas): 1801.17 [Gflops/sec]
-perf: 22.7368 [Gbytes/sec]
-perf(cublas): 4.94278 [Gbytes/sec]
+time: 0.004 [ms]
+time(cublas): 0.021 [ms]
+perf: 5.057 [Gflops/sec]
+perf(cublas): 0.963238 [Gflops/sec]
+perf: 28.421 [Gbytes/sec]
+perf(cublas): 5.41352 [Gbytes/sec]
 residual norm 2: 0
 ok
+matrix: ../matrix/e05r0000.mtx
 n: 236, nnz: 5856, threads: 64
 time: 0.005 [ms]
-time(cublas): 0.023 [ms]
-perf: 552.806 [Gflops/sec]
-perf(cublas): 120.175 [Gflops/sec]
-perf: 10.1256 [Gbytes/sec]
-perf(cublas): 2.20122 [Gbytes/sec]
-residual norm 2: 0
-ok
-n: 900, nnz: 4322, threads: 64
-time: 0.013 [ms]
 time(cublas): 0.022 [ms]
-perf: 598.431 [Gflops/sec]
-perf(cublas): 353.618 [Gflops/sec]
-perf: 3.76769 [Gbytes/sec]
-perf(cublas): 2.22636 [Gbytes/sec]
+perf: 2.3424 [Gflops/sec]
+perf(cublas): 0.532364 [Gflops/sec]
+perf: 10.1256 [Gbytes/sec]
+perf(cublas): 2.30127 [Gbytes/sec]
 residual norm 2: 0
 ok
+matrix: ../matrix/gr_30_30.mtx
+n: 900, nnz: 4322, threads: 64
+time: 0.015 [ms]
+time(cublas): 0.027 [ms]
+perf: 0.576267 [Gflops/sec]
+perf(cublas): 0.320148 [Gflops/sec]
+perf: 3.26533 [Gbytes/sec]
+perf(cublas): 1.81407 [Gbytes/sec]
+residual norm 2: 0
+ok
+matrix: ../matrix/bcsstm27.mtx
 n: 1224, nnz: 28675, threads: 64
-time: 0.014 [ms]
-time(cublas): 0.021 [ms]
-perf: 5014.03 [Gflops/sec]
-perf(cublas): 3342.69 [Gflops/sec]
-perf: 17.7849 [Gbytes/sec]
-perf(cublas): 11.8566 [Gbytes/sec]
+time: 0.004 [ms]
+time(cublas): 0.027 [ms]
+perf: 14.3375 [Gflops/sec]
+perf(cublas): 2.12407 [Gflops/sec]
+perf: 62.247 [Gbytes/sec]
+perf(cublas): 9.22178 [Gbytes/sec]
 residual norm 2: 0
 ok
-n: 1224, nnz: 28675, threads: 64
-time: 0.014 [ms]
-time(cublas): 0.021 [ms]
-perf: 5014.03 [Gflops/sec]
-perf(cublas): 3342.69 [Gflops/sec]
-perf: 17.7849 [Gbytes/sec]
-perf(cublas): 11.8566 [Gbytes/sec]
-residual norm 2: 0
-ok
+matrix: ../matrix/ck656.mtx
 n: 656, nnz: 3884, threads: 64
 time: 0.005 [ms]
-time(cublas): 0.023 [ms]
-perf: 1019.16 [Gflops/sec]
-perf(cublas): 221.557 [Gflops/sec]
+time(cublas): 0.021 [ms]
+perf: 1.5536 [Gflops/sec]
+perf(cublas): 0.369905 [Gflops/sec]
 perf: 8.3144 [Gbytes/sec]
-perf(cublas): 1.80748 [Gbytes/sec]
+perf(cublas): 1.97962 [Gbytes/sec]
 residual norm 2: 0
 ok
+matrix: ../matrix/cry2500.mtx
 n: 2500, nnz: 12349, threads: 64
 time: 0.014 [ms]
-time(cublas): 0.028 [ms]
-perf: 4410.36 [Gflops/sec]
-perf(cublas): 2205.18 [Gflops/sec]
+time(cublas): 0.022 [ms]
+perf: 1.76414 [Gflops/sec]
+perf(cublas): 1.12264 [Gflops/sec]
 perf: 9.914 [Gbytes/sec]
-perf(cublas): 4.957 [Gbytes/sec]
+perf(cublas): 6.30891 [Gbytes/sec]
 residual norm 2: 0
 ok
+matrix: ../matrix/e20r2000.mtx
 n: 4241, nnz: 131556, threads: 64
-time: 0.016 [ms]
-time(cublas): 0.021 [ms]
-perf: 69741.1 [Gflops/sec]
-perf(cublas): 53136.1 [Gflops/sec]
-perf: 70.0192 [Gbytes/sec]
-perf(cublas): 53.348 [Gbytes/sec]
+time: 0.017 [ms]
+time(cublas): 0.022 [ms]
+perf: 15.4772 [Gflops/sec]
+perf(cublas): 11.9596 [Gflops/sec]
+perf: 65.9005 [Gbytes/sec]
+perf(cublas): 50.9231 [Gbytes/sec]
 residual norm 2: 0
 ok
-n: 4241, nnz: 131556, threads: 64
-time: 0.016 [ms]
-time(cublas): 0.021 [ms]
-perf: 69741.1 [Gflops/sec]
-perf(cublas): 53136.1 [Gflops/sec]
-perf: 70.0192 [Gbytes/sec]
-perf(cublas): 53.348 [Gbytes/sec]
-residual norm 2: 0
-ok
+matrix: ../matrix/fs_760_3.mtx
 n: 760, nnz: 5976, threads: 64
 time: 0.013 [ms]
-time(cublas): 0.022 [ms]
-perf: 698.732 [Gflops/sec]
-perf(cublas): 412.887 [Gflops/sec]
-perf: 4.61323 [Gbytes/sec]
-perf(cublas): 2.726 [Gbytes/sec]
-residual norm 2: 0
-ok
-n: 425, nnz: 1339, threads: 64
-time: 0.005 [ms]
-time(cublas): 0.025 [ms]
-perf: 227.63 [Gflops/sec]
-perf(cublas): 45.526 [Gflops/sec]
-perf: 3.5032 [Gbytes/sec]
-perf(cublas): 0.70064 [Gbytes/sec]
-residual norm 2: 0
-ok
-n: 450, nnz: 2580, threads: 64
-time: 0.014 [ms]
-time(cublas): 0.021 [ms]
-perf: 165.857 [Gflops/sec]
-perf(cublas): 110.571 [Gflops/sec]
-perf: 1.98886 [Gbytes/sec]
-perf(cublas): 1.3259 [Gbytes/sec]
-residual norm 2: 0
-ok
-n: 450, nnz: 2580, threads: 64
-time: 0.014 [ms]
-time(cublas): 0.021 [ms]
-perf: 165.857 [Gflops/sec]
-perf(cublas): 110.571 [Gflops/sec]
-perf: 1.98886 [Gbytes/sec]
-perf(cublas): 1.3259 [Gbytes/sec]
-residual norm 2: 0
-ok
-n: 989, nnz: 3537, threads: 64
-time: 0.005 [ms]
-time(cublas): 0.024 [ms]
-perf: 1399.24 [Gflops/sec]
-perf(cublas): 291.508 [Gflops/sec]
-perf: 8.8248 [Gbytes/sec]
-perf(cublas): 1.8385 [Gbytes/sec]
-residual norm 2: 0
-ok
-n: 2873, nnz: 15032, threads: 64
-time: 0.005 [ms]
 time(cublas): 0.023 [ms]
-perf: 17274.8 [Gflops/sec]
-perf(cublas): 3755.39 [Gflops/sec]
-perf: 33.2456 [Gbytes/sec]
+perf: 0.919385 [Gflops/sec]
+perf(cublas): 0.519652 [Gflops/sec]
+perf: 4.61323 [Gbytes/sec]
+perf(cublas): 2.60748 [Gbytes/sec]
+residual norm 2: 0
+ok
+matrix: ../matrix/impcol_d.mtx
+n: 425, nnz: 1339, threads: 64
+time: 0.014 [ms]
+time(cublas): 0.022 [ms]
+perf: 0.191286 [Gflops/sec]
+perf(cublas): 0.121727 [Gflops/sec]
+perf: 1.25114 [Gbytes/sec]
+perf(cublas): 0.796182 [Gbytes/sec]
+residual norm 2: 0
+ok
+matrix: ../matrix/rdb450l.mtx
+n: 450, nnz: 2580, threads: 64
+time: 0.005 [ms]
+time(cublas): 0.022 [ms]
+perf: 1.032 [Gflops/sec]
+perf(cublas): 0.234545 [Gflops/sec]
+perf: 5.5688 [Gbytes/sec]
+perf(cublas): 1.26564 [Gbytes/sec]
+residual norm 2: 0
+ok
+matrix: ../matrix/west0989.mtx
+n: 989, nnz: 3537, threads: 64
+time: 0.014 [ms]
+time(cublas): 0.023 [ms]
+perf: 0.505286 [Gflops/sec]
+perf(cublas): 0.307565 [Gflops/sec]
+perf: 3.15171 [Gbytes/sec]
+perf(cublas): 1.91843 [Gbytes/sec]
+residual norm 2: 0
+ok
+matrix: ../matrix/zenios.mtx
+n: 2873, nnz: 15032, threads: 64
+time: 0.012 [ms]
+time(cublas): 0.023 [ms]
+perf: 2.50533 [Gflops/sec]
+perf(cublas): 1.30713 [Gflops/sec]
+perf: 13.8523 [Gbytes/sec]
 perf(cublas): 7.2273 [Gbytes/sec]
 residual norm 2: 0

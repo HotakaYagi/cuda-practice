@@ -9,6 +9,7 @@
 #include <cublas_v2.h>
 #include <cusparse_v2.h>
 #include <thrust/device_vector.h>
+#include <iomanip>
 
 template<typename T>
 __device__ T warp_reduction(T val)
@@ -104,18 +105,26 @@ int main(int args, char *argv[])
     float* vec_yPtr = thrust::raw_pointer_cast(&(vec_y[0]));
 
     // スレッドサイズはどう決めるのがよいのだろうか?
-    const auto blocksize = 128;
+    const auto blocksize = 64;
     const dim3 block(blocksize, 1, 1);
     const dim3 grid(warpSize * std::ceil(n / static_cast<float>(block.x)), 1, 1);
     
     // 時間計測するところ
-    std::chrono::system_clock::time_point start, end;
-    start = std::chrono::system_clock::now();
+    const auto num_iter = 10;
+    std::vector<double> time_stamp;
+    
+    for (auto i = 0; i < num_iter; i++)
+    {
+        std::chrono::system_clock::time_point start, end;
+        start = std::chrono::system_clock::now();
 
-    // 計算するところ
-    spMulAdd_vector<float> <<<grid, block>>>(rowPtr, colPtr, valPtr, vec_xPtr, vec_yPtr, n, nnz);
+        // 計算するところ
+        spMulAdd_vector<float> <<<grid, block>>>(rowPtr, colPtr, valPtr, vec_xPtr, vec_yPtr, n, nnz);
 
-    end = std::chrono::system_clock::now();
+        end = std::chrono::system_clock::now();
+
+        time_stamp.push_back(static_cast<double>(std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() / 1000.0));
+    }
 
     // 結果があっているかcpuでも計算して確認するところ
     std::unique_ptr<float[]> result(new float[n]);
@@ -167,22 +176,31 @@ int main(int args, char *argv[])
     const float ALPHA = 1;
     const float BETA = 0;
 
-    std::chrono::system_clock::time_point start_cublas, end_cublas;
-    start_cublas = std::chrono::system_clock::now();
+    std::vector<double> time_stamp_cublas;
+    for (auto i = 0; i < num_iter; i++)
+    {
+        std::chrono::system_clock::time_point start_cublas, end_cublas;
+        start_cublas = std::chrono::system_clock::now();
 
-    ::cusparseScsrmv(cusparse, CUSPARSE_OPERATION_NON_TRANSPOSE,
-        n, n, nnz,
-        &ALPHA, matDescr, valPtr, rowPtr, colPtr,
-        vec_xPtr,
-        &BETA, result_cuPtr);
+        ::cusparseScsrmv(cusparse, CUSPARSE_OPERATION_NON_TRANSPOSE,
+            n, n, nnz,
+            &ALPHA, matDescr, valPtr, rowPtr, colPtr,
+            vec_xPtr,
+            &BETA, result_cuPtr);
 
-    end_cublas = std::chrono::system_clock::now();
+        end_cublas = std::chrono::system_clock::now();
+        time_stamp_cublas.push_back(static_cast<double>(std::chrono::duration_cast<std::chrono::microseconds>(end_cublas - start_cublas).count() / 1000.0));
+     }
     std::unique_ptr<float[]> result_cu_host(new float[n]);
     thrust::copy_n(result_cu.begin(), n, result_cu_host.get());
 
     // 計算時間(データ転送含めない？)や次数、実効性能を出力
-    const auto time = static_cast<double>(std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() / 1000.0);
-    const auto time_cublas = static_cast<double>(std::chrono::duration_cast<std::chrono::microseconds>(end_cublas - start_cublas).count() / 1000.0);
+    const auto median_it = time_stamp.begin() + time_stamp.size() / 2;
+    std::nth_element(time_stamp.begin(), median_it, time_stamp.end());
+    const auto time = *median_it;
+    const auto median_it_cublas = time_stamp_cublas.begin() + time_stamp_cublas.size() / 2;
+    std::nth_element(time_stamp_cublas.begin(), median_it_cublas, time_stamp_cublas.end());
+    const auto time_cublas = *median_it_cublas;
     const auto flops = 2 * nnz;
     const auto bytes = (n + 1) * sizeof(int) + nnz * sizeof(float) + nnz * sizeof(int) + 3 * n * sizeof(float);
 /*
@@ -197,7 +215,7 @@ int main(int args, char *argv[])
     std::cout << "residual norm 2: " << residual / y_norm << std::endl;
 */
 
-    std::cout << fname << "," << time << "," << time_cublas << "," << flops / time / 1e6 << "," << flops / time_cublas / 1e6 << "," << bytes / time / 1e6 << "," << bytes / time_cublas / 1e6 << std::endl; 
+    std::cout << fname << "," << std::fixed << std::setprecision(15) << time << "," << time_cublas << "," << flops / time / 1e6 << "," << flops / time_cublas / 1e6 << "," << bytes / time / 1e6 << "," << bytes / time_cublas / 1e6 << std::endl; 
     return 0;
 }
 

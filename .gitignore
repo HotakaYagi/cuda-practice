@@ -1,3 +1,4 @@
 spmv
 *.o
 *.out
+*.DS_Store

@@ -123,7 +123,7 @@ int main(int args, char *argv[])
 
         end = std::chrono::system_clock::now();
 
-        time_stamp.push_back(static_cast<double>(std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() / 1000.0));
+        time_stamp.push_back(static_cast<double>(std::chrono::duration_cast<std::chrono::microseconds>(end - start).count()));
     }
 
     // 結果があっているかcpuでも計算して確認するところ
@@ -189,7 +189,7 @@ int main(int args, char *argv[])
             &BETA, result_cuPtr);
 
         end_cublas = std::chrono::system_clock::now();
-        time_stamp_cublas.push_back(static_cast<double>(std::chrono::duration_cast<std::chrono::microseconds>(end_cublas - start_cublas).count() / 1000.0));
+        time_stamp_cublas.push_back(static_cast<double>(std::chrono::duration_cast<std::chrono::microseconds>(end_cublas - start_cublas).count()));
      }
     std::unique_ptr<float[]> result_cu_host(new float[n]);
     thrust::copy_n(result_cu.begin(), n, result_cu_host.get());
@@ -206,8 +206,8 @@ int main(int args, char *argv[])
 /*
     std::cout << "matrix: " << fname << std::endl;
     std::cout << "n: " << n << ", nnz: " << nnz << ", threads: " << blocksize << std::endl;
-    std::cout << "time: " << time << " [ms]" << std::endl;
-    std::cout << "time(cublas): " << time_cublas << " [ms]" << std::endl;
+    std::cout << "time: " << time << " [sec]" << std::endl;
+    std::cout << "time(cublas): " << time_cublas << " [sec]" << std::endl;
     std::cout << "perf: " << flops / time / 1e6 << " [Gflops/sec]" << std::endl;
     std::cout << "perf(cublas): " << flops / time_cublas / 1e6 << " [Gflops/sec]" << std::endl;
     std::cout << "perf: " << bytes / time / 1e6 << " [Gbytes/sec]" << std::endl;

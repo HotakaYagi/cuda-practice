@@ -105,9 +105,9 @@ int main(int args, char *argv[])
     float* vec_yPtr = thrust::raw_pointer_cast(&(vec_y[0]));
 
     // スレッドサイズはどう決めるのがよいのだろうか?
-    const auto blocksize = 64;
+    const auto blocksize = 8;
     const dim3 block(blocksize, 1, 1);
-    const dim3 grid(warpSize * std::ceil(n / static_cast<float>(block.x)), 1, 1);
+    const dim3 grid(std::ceil(n / static_cast<float>(block.x)), 1, 1);
     
     // 時間計測するところ
     const auto num_iter = 10;
@@ -119,7 +119,7 @@ int main(int args, char *argv[])
         start = std::chrono::system_clock::now();
 
         // 計算するところ
-        spMulAdd_vector<float> <<<grid, block>>>(rowPtr, colPtr, valPtr, vec_xPtr, vec_yPtr, n, nnz);
+        spMulAdd_scalar<float> <<<grid, block>>>(rowPtr, colPtr, valPtr, vec_xPtr, vec_yPtr, n, nnz);
 
         end = std::chrono::system_clock::now();
 

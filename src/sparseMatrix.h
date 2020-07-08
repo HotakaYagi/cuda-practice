@@ -10,10 +10,10 @@ class sparseMatrix
 {
 public:
   int m, n, nnz;
-  std::unique_ptr<int[]> row;
+  //std::unique_ptr<int[]> row;
+  std::vector<int> row;
   std::vector<int> col;
   std::vector<float> val;
-  std::unique_ptr<float[]> matrix;
 
   sparseMatrix(std::string fname);
   void residual(const float * __restrict__ x, const float * __restrict__ y, float * __restrict__ answer);
@@ -34,39 +34,31 @@ public:
         std::cout << "EROOR!" << std::endl;
     }
   
-    matrix.reset(new float[m * n]);
-    for (auto i = 0; i < m * n; i++)
-    {
-        matrix[i] = 0;
-    }
-    // dense matrix を作成しておく
-    for (auto i = 0; i < nnz; i++)
-    {
-      int ind_m, ind_n;
-      double data;
-      fin >> ind_m >> ind_n >> data;
-      matrix[(ind_m-1) + (ind_n-1) * m] = static_cast<float>(data);
-    }
-    fin.close();
+        std::cout << "m:" << m << std::endl;
+        std::cout << "n:" << n << std::endl;
+        std::cout << "nnz:" << nnz << std::endl;
 
     // sparse (csr) を作るところ
-    row.reset(new int[n + 1]);
-    auto nnz_count = 0;
-    row[0] = nnz_count;
-    for (auto i = 0; i < n; i++)
+    //row.reset(new int[n + 1]);
+    auto current_n = 1;
+    row.push_back(0);
+    for (auto i = decltype(nnz)(0); i < nnz; i++)
     {
-      for (auto j = 0; j < n; j++)
+      int ind_m, ind_n;
+      float data;
+      fin >> ind_m >> ind_n >> data;
+
+      col.push_back(ind_m - 1);
+      val.push_back(data);
+      if (ind_n == current_n + 1)
       {
-         if (matrix[i * n + j] != 0)
-         {
-            val.push_back(matrix[i * n + j]);
-            col.push_back(j);
-            nnz_count++;
-         }
-      } 
-      row[i + 1] = nnz_count;
+          row.push_back(i);
+          current_n++;  
       }
     }
+    row[n] = nnz;
+    fin.close();
+  }
 
 void sparseMatrix::residual(const float * __restrict__ x, const float * __restrict__ y, float * __restrict__ answer)
 {

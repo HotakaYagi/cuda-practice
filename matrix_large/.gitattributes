@@ -1,8 +1,0 @@
-. filter=lfs diff=lfs merge=lfs -text
-rail_79841.mtx filter=lfs diff=lfs merge=lfs -text
-t3dh_a.mtx filter=lfs diff=lfs merge=lfs -text
-F2.mtx filter=lfs diff=lfs merge=lfs -text
-TSOPF_FS_b39_c19.mtx filter=lfs diff=lfs merge=lfs -text
-cfd1.mtx filter=lfs diff=lfs merge=lfs -text
-lhr71.mtx filter=lfs diff=lfs merge=lfs -text
-nd24k.mtx filter=lfs diff=lfs merge=lfs -text

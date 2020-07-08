@@ -92,7 +92,7 @@ int main(int args, char *argv[])
     thrust::device_vector<float> vec_x(n);
     thrust::device_vector<float> vec_y(n);
 
-    thrust::copy_n(sp.row.get(), n + 1, row.begin());
+    thrust::copy_n(sp.row.begin(), n + 1, row.begin());
     thrust::copy_n(sp.col.begin(), nnz, col.begin());
     thrust::copy_n(sp.val.begin(), nnz, val.begin());
     thrust::copy_n(host_x.get(), n, vec_x.begin());
@@ -105,7 +105,7 @@ int main(int args, char *argv[])
     float* vec_yPtr = thrust::raw_pointer_cast(&(vec_y[0]));
 
     // スレッドサイズはどう決めるのがよいのだろうか?
-    const auto blocksize = 8;
+    const auto blocksize = 64;
     const dim3 block(blocksize, 1, 1);
     const dim3 grid(std::ceil(n / static_cast<float>(block.x)), 1, 1);
     
@@ -148,8 +148,10 @@ int main(int args, char *argv[])
         y_norm += std::pow(result[i], 2);
     }
     
+    residual = std::sqrt(residual);
+    y_norm = std::sqrt(y_norm);
+
     // float で誤差含めてだいたいこのくらい合ってれば正しい？
-    /*
     const auto m = 7 - std::log10(n);
     if (residual / y_norm < m)
     {
@@ -159,8 +161,7 @@ int main(int args, char *argv[])
     {
         std::cout << "ng" << std::endl;
     }
-    */
-
+/*
     // cuSPARSE
     ::cusparseHandle_t cusparse;
     ::cusparseCreate(&cusparse);
@@ -182,7 +183,7 @@ int main(int args, char *argv[])
         std::chrono::system_clock::time_point start_cublas, end_cublas;
         start_cublas = std::chrono::system_clock::now();
 
-        ::cusparseScsrmv(cusparse, CUSPARSE_OPERATION_NON_TRANSPOSE,
+       :: cusparseScsrmv(cusparse, CUSPARSE_OPERATION_NON_TRANSPOSE,
             n, n, nnz,
             &ALPHA, matDescr, valPtr, rowPtr, colPtr,
             vec_xPtr,
@@ -193,29 +194,29 @@ int main(int args, char *argv[])
      }
     std::unique_ptr<float[]> result_cu_host(new float[n]);
     thrust::copy_n(result_cu.begin(), n, result_cu_host.get());
-
+*/
     // 計算時間(データ転送含めない？)や次数、実効性能を出力
     const auto median_it = time_stamp.begin() + time_stamp.size() / 2;
     std::nth_element(time_stamp.begin(), median_it, time_stamp.end());
     const auto time = *median_it;
+/*
     const auto median_it_cublas = time_stamp_cublas.begin() + time_stamp_cublas.size() / 2;
     std::nth_element(time_stamp_cublas.begin(), median_it_cublas, time_stamp_cublas.end());
     const auto time_cublas = *median_it_cublas;
+*/
     const auto flops = 2 * nnz;
     const auto bytes = (n + 1) * sizeof(int) + nnz * sizeof(float) + nnz * sizeof(int) + 3 * n * sizeof(float);
-/*
     std::cout << "matrix: " << fname << std::endl;
     std::cout << "n: " << n << ", nnz: " << nnz << ", threads: " << blocksize << std::endl;
-    std::cout << "time: " << time << " [sec]" << std::endl;
-    std::cout << "time(cublas): " << time_cublas << " [sec]" << std::endl;
+    std::cout << "time: " << time << " [msec]" << std::endl;
+    //std::cout << "time(cublas): " << time_cublas << " [msec]" << std::endl;
     std::cout << "perf: " << flops / time / 1e6 << " [Gflops/sec]" << std::endl;
-    std::cout << "perf(cublas): " << flops / time_cublas / 1e6 << " [Gflops/sec]" << std::endl;
+    //std::cout << "perf(cublas): " << flops / time_cublas / 1e6 << " [Gflops/sec]" << std::endl;
     std::cout << "perf: " << bytes / time / 1e6 << " [Gbytes/sec]" << std::endl;
-    std::cout << "perf(cublas): " << bytes / time_cublas / 1e6 << " [Gbytes/sec]" << std::endl;
+    //std::cout << "perf(cublas): " << bytes / time_cublas / 1e6 << " [Gbytes/sec]" << std::endl;
     std::cout << "residual norm 2: " << residual / y_norm << std::endl;
-*/
 
-    std::cout << fname << "," << std::fixed << std::setprecision(15) << time << "," << time_cublas << "," << flops / time / 1e6 << "," << flops / time_cublas / 1e6 << "," << bytes / time / 1e6 << "," << bytes / time_cublas / 1e6 << std::endl; 
+//    std::cout << fname << "," << std::fixed << std::setprecision(15) << time << "," << time_cublas << "," << flops / time / 1e6 << "," << flops / time_cublas / 1e6 << "," << bytes / time / 1e6 << "," << bytes / time_cublas / 1e6 << std::endl; 
     return 0;
 }
 

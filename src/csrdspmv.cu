@@ -105,7 +105,7 @@ int main(int args, char *argv[])
     double* vec_yPtr = thrust::raw_pointer_cast(&(vec_y[0]));
 
     // スレッドサイズはどう決めるのがよいのだろうか?
-    const auto blocksize = 128;
+    const auto blocksize = 8;
     const dim3 block(blocksize, 1, 1);
     const dim3 grid(warpSize * std::ceil(n / static_cast<double>(block.x)), 1, 1);
     
@@ -123,7 +123,7 @@ int main(int args, char *argv[])
 
         end = std::chrono::system_clock::now();
 
-        time_stamp.push_back(static_cast<double>(std::chrono::duration_cast<std::chrono::microseconds>(end - start).count()));
+        time_stamp.push_back(static_cast<double>(std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count())/1000/1000);
     }
 
     // 結果があっているかcpuでも計算して確認するところ
@@ -210,7 +210,7 @@ int main(int args, char *argv[])
 
         end = std::chrono::system_clock::now();
 
-        time_stamp_scl.push_back(static_cast<double>(std::chrono::duration_cast<std::chrono::microseconds>(end - start).count()));
+        time_stamp_scl.push_back(static_cast<double>(std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count())/1000/1000);
     }
  
     // 計算時間や次数、実効性能を出力
@@ -233,7 +233,7 @@ int main(int args, char *argv[])
     //std::cout << "perf(cublas): " << bytes / time_cublas / 1e6 << " [Gbytes/sec]" << std::endl;
     //std::cout << "residual norm 2: " << residual / y_norm << std::endl;
 
-    std::cout << fname << "," << std::fixed << std::setprecision(15) << time << "," << time_scl << "," << flops / time / 1e6 << "," << flops / time_scl / 1e6 << "," << bytes / time / 1e6 << "," << bytes / time_scl / 1e6 << std::endl; 
+    std::cout << fname << "," << std::fixed << std::setprecision(15) << time << "," << time_scl << "," << flops / time / 1e9 << "," << flops / time_scl / 1e9 << "," << bytes / time / 1e9 << "," << bytes / time_scl / 1e9 << std::endl; 
     return 0;
 }
 

@@ -75,8 +75,8 @@ int main(int args, char *argv[])
     const auto nnz = sp.nnz;
 
     // ベクトルxとベクトルyを作るところ
-    std::unique_ptr<float[]> host_x(new float[n]);
-    std::unique_ptr<float[]> host_y(new float[n]);
+    std::unique_ptr<double[]> host_x(new double[n]);
+    std::unique_ptr<double[]> host_y(new double[n]);
 
     for (auto i = 0; i < n; i++)
     {
@@ -88,9 +88,9 @@ int main(int args, char *argv[])
     // gpu用ので配列を生成
     thrust::device_vector<int> row(n + 1);
     thrust::device_vector<int> col(nnz);
-    thrust::device_vector<float> val(nnz);
-    thrust::device_vector<float> vec_x(n);
-    thrust::device_vector<float> vec_y(n);
+    thrust::device_vector<double> val(nnz);
+    thrust::device_vector<double> vec_x(n);
+    thrust::device_vector<double> vec_y(n);
 
     thrust::copy_n(sp.row.begin(), n + 1, row.begin());
     thrust::copy_n(sp.col.begin(), nnz, col.begin());
@@ -100,14 +100,14 @@ int main(int args, char *argv[])
 
     int* rowPtr = thrust::raw_pointer_cast(&(row[0]));
     int* colPtr = thrust::raw_pointer_cast(&(col[0]));
-    float* valPtr = thrust::raw_pointer_cast(&(val[0]));
-    float* vec_xPtr = thrust::raw_pointer_cast(&(vec_x[0]));
-    float* vec_yPtr = thrust::raw_pointer_cast(&(vec_y[0]));
+    double* valPtr = thrust::raw_pointer_cast(&(val[0]));
+    double* vec_xPtr = thrust::raw_pointer_cast(&(vec_x[0]));
+    double* vec_yPtr = thrust::raw_pointer_cast(&(vec_y[0]));
 
     // スレッドサイズはどう決めるのがよいのだろうか?
-    const auto blocksize = 64;
+    const auto blocksize = 128;
     const dim3 block(blocksize, 1, 1);
-    const dim3 grid(warpSize * std::ceil(n / static_cast<float>(block.x)), 1, 1);
+    const dim3 grid(warpSize * std::ceil(n / static_cast<double>(block.x)), 1, 1);
     
     // 時間計測するところ
     const auto num_iter = 10;
@@ -119,7 +119,7 @@ int main(int args, char *argv[])
         start = std::chrono::system_clock::now();
 
         // 計算するところ
-        spMulAdd_vector<float> <<<grid, block>>>(rowPtr, colPtr, valPtr, vec_xPtr, vec_yPtr, n, nnz);
+        spMulAdd_vector<double> <<<grid, block>>>(rowPtr, colPtr, valPtr, vec_xPtr, vec_yPtr, n, nnz);
 
         end = std::chrono::system_clock::now();
 
@@ -127,10 +127,10 @@ int main(int args, char *argv[])
     }
 
     // 結果があっているかcpuでも計算して確認するところ
-    std::unique_ptr<float[]> result(new float[n]);
+    std::unique_ptr<double[]> result(new double[n]);
     thrust::copy_n(vec_y.begin(), n, result.get());
 
-    std::unique_ptr<float[]> host_result(new float[n]);
+    std::unique_ptr<double[]> host_result(new double[n]);
     for (auto i = 0; i < n; i++)
     {
         host_result[i] = 0;
@@ -151,9 +151,9 @@ int main(int args, char *argv[])
     residual = std::sqrt(residual);
     y_norm = std::sqrt(y_norm);
 
+/*
     // float で誤差含めてだいたいこのくらい合ってれば正しい？
-    /*
-    const auto m = 7 - std::log10(n);
+    const auto m = 14 - std::log10(n);
     if (residual / y_norm < m)
     {
         std::cout << "ok" << std::endl;
@@ -162,8 +162,9 @@ int main(int args, char *argv[])
     {
         std::cout << "ng" << std::endl;
     }
-
+    */
     // cuSPARSE
+    /*
     ::cusparseHandle_t cusparse;
     ::cusparseCreate(&cusparse);
 
@@ -184,7 +185,8 @@ int main(int args, char *argv[])
         std::chrono::system_clock::time_point start_cublas, end_cublas;
         start_cublas = std::chrono::system_clock::now();
 
-        ::cusparseScsrmv(cusparse, CUSPARSE_OPERATION_NON_TRANSPOSE,
+//cusparseDcsrmv
+        ::cusparseDbsrxmv(cusparse, CUSPARSE_OPERATION_NON_TRANSPOSE,
             n, n, nnz,
             &ALPHA, matDescr, valPtr, rowPtr, colPtr,
             vec_xPtr,
@@ -196,28 +198,42 @@ int main(int args, char *argv[])
     std::unique_ptr<float[]> result_cu_host(new float[n]);
     thrust::copy_n(result_cu.begin(), n, result_cu_host.get());
     */
+    const dim3 grid_scl(std::ceil(n / static_cast<double>(block.x)), 1, 1);
+    std::vector<double> time_stamp_scl;
+    for (auto i = 0; i < num_iter; i++)
+    {
+        std::chrono::system_clock::time_point start, end;
+        start = std::chrono::system_clock::now();
 
-    // 計算時間(データ転送含めない？)や次数、実効性能を出力
+        // 計算するところ
+        spMulAdd_scalar<double> <<<grid_scl, block>>>(rowPtr, colPtr, valPtr, vec_xPtr, vec_yPtr, n, nnz);
+
+        end = std::chrono::system_clock::now();
+
+        time_stamp_scl.push_back(static_cast<double>(std::chrono::duration_cast<std::chrono::microseconds>(end - start).count()));
+    }
+ 
+    // 計算時間や次数、実効性能を出力
     const auto median_it = time_stamp.begin() + time_stamp.size() / 2;
     std::nth_element(time_stamp.begin(), median_it, time_stamp.end());
     const auto time = *median_it;
-    const auto median_it_cublas = time_stamp_cublas.begin() + time_stamp_cublas.size() / 2;
-    std::nth_element(time_stamp_cublas.begin(), median_it_cublas, time_stamp_cublas.end());
-    const auto time_cublas = *median_it_cublas;
+    const auto median_it_scl = time_stamp_scl.begin() + time_stamp_scl.size() / 2;
+    std::nth_element(time_stamp_scl.begin(), median_it_scl, time_stamp_scl.end());
+    const auto time_scl = *median_it_scl;
 
     const auto flops = 2 * nnz;
-    const auto bytes = (n + 1) * sizeof(int) + nnz * sizeof(float) + nnz * sizeof(int) + 3 * n * sizeof(float);
-    std::cout << "matrix: " << fname << std::endl;
-    std::cout << "n: " << n << ", nnz: " << nnz << ", threads: " << blocksize << std::endl;
-    std::cout << "time: " << time << " [msec]" << std::endl;
+    const auto bytes = (n + 1) * sizeof(int) + nnz * sizeof(double) + nnz * sizeof(int) + 3 * n * sizeof(double);
+    //std::cout << "matrix: " << fname << std::endl;
+    //std::cout << "n: " << n << ", nnz: " << nnz << ", threads: " << blocksize << std::endl;
+    //std::cout << "time: " << time << " [msec]" << std::endl;
     //std::cout << "time(cublas): " << time_cublas << " [msec]" << std::endl;
-    std::cout << "perf: " << flops / time / 1e6 << " [Gflops/sec]" << std::endl;
+    //std::cout << "perf: " << flops / time / 1e6 << " [Gflops/sec]" << std::endl;
     //std::cout << "perf(cublas): " << flops / time_cublas / 1e6 << " [Gflops/sec]" << std::endl;
-    std::cout << "perf: " << bytes / time / 1e6 << " [Gbytes/sec]" << std::endl;
+    //std::cout << "perf: " << bytes / time / 1e6 << " [Gbytes/sec]" << std::endl;
     //std::cout << "perf(cublas): " << bytes / time_cublas / 1e6 << " [Gbytes/sec]" << std::endl;
-    std::cout << "residual norm 2: " << residual / y_norm << std::endl;
+    //std::cout << "residual norm 2: " << residual / y_norm << std::endl;
 
-//    std::cout << fname << "," << std::fixed << std::setprecision(15) << time << "," << time_cublas << "," << flops / time / 1e6 << "," << flops / time_cublas / 1e6 << "," << bytes / time / 1e6 << "," << bytes / time_cublas / 1e6 << std::endl; 
+    std::cout << fname << "," << std::fixed << std::setprecision(15) << time << "," << time_scl << "," << flops / time / 1e6 << "," << flops / time_scl / 1e6 << "," << bytes / time / 1e6 << "," << bytes / time_scl / 1e6 << std::endl; 
     return 0;
 }
 

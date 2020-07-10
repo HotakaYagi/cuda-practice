@@ -2,7 +2,7 @@ import os
 import subprocess
 
 matrixList = []
-for root, dirs, files in os.walk("../matrix/"):
+for root, dirs, files in os.walk("../matrix_large/"):
     for filename in files:
         matrixList.append(os.path.join(root, filename)) 
 
@@ -17,6 +17,6 @@ for matrix in matrixList:
     result.append(res)
 
 with open('./result.csv', mode='w') as f:
-    f.write("matrix,time,time(cublas),flop,flop(cublas),byte,byte(cublas)\n")
+    f.write("matrix,time,time(scl),flop,flop(scl),byte,byte(scl)\n")
     for res in result: 
         f.write(res)

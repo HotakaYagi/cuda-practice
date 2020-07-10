@@ -13,10 +13,10 @@ public:
   //std::unique_ptr<int[]> row;
   std::vector<int> row;
   std::vector<int> col;
-  std::vector<float> val;
+  std::vector<double> val;
 
   sparseMatrix(std::string fname);
-  void residual(const float * __restrict__ x, const float * __restrict__ y, float * __restrict__ answer);
+  //void residual(const float * __restrict__ x, const float * __restrict__ y, float * __restrict__ answer);
    
   //TODO: 行列ベクトル積とか基本演算実装しとく？
 };
@@ -45,7 +45,7 @@ public:
     for (auto i = decltype(nnz)(0); i < nnz; i++)
     {
       int ind_m, ind_n;
-      float data;
+      double data;
       fin >> ind_m >> ind_n >> data;
 
       col.push_back(ind_m - 1);
@@ -60,6 +60,7 @@ public:
     fin.close();
   }
 
+/*
 void sparseMatrix::residual(const float * __restrict__ x, const float * __restrict__ y, float * __restrict__ answer)
 {
   for (auto i = 0; i < n; i++)
@@ -72,3 +73,4 @@ void sparseMatrix::residual(const float * __restrict__ x, const float * __restri
     answer[i] = y_val - y[i];
   }
 }
+*/

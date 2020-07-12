@@ -5,6 +5,7 @@
 #include <vector>
 #include <string>
 #include "sparseMatrix.h"
+#include <cuda.h>
 #include <cuda_runtime_api.h>
 #include <cublas_v2.h>
 #include <cusparse_v2.h>
@@ -105,7 +106,8 @@ int main(int args, char *argv[])
     double* vec_yPtr = thrust::raw_pointer_cast(&(vec_y[0]));
 
     // スレッドサイズはどう決めるのがよいのだろうか?
-    const auto blocksize = 8;
+    int thread_size = atoi(argv[2]);
+    const auto blocksize = thread_size;
     const dim3 block(blocksize, 1, 1);
     const dim3 grid(warpSize * std::ceil(n / static_cast<double>(block.x)), 1, 1);
     
@@ -164,7 +166,7 @@ int main(int args, char *argv[])
     }
     */
     // cuSPARSE
-    /*
+    
     ::cusparseHandle_t cusparse;
     ::cusparseCreate(&cusparse);
 
@@ -173,11 +175,11 @@ int main(int args, char *argv[])
     ::cusparseSetMatType(matDescr, CUSPARSE_MATRIX_TYPE_GENERAL);
     ::cusparseSetMatIndexBase(matDescr, CUSPARSE_INDEX_BASE_ZERO);
 
-    thrust::device_vector<float> result_cu(n);
+    thrust::device_vector<double> result_cu(n);
     thrust::copy_n(host_y.get(), n, result_cu.begin());
-    float* result_cuPtr = thrust::raw_pointer_cast(&(result_cu[0]));
-    const float ALPHA = 1;
-    const float BETA = 0;
+    double* result_cuPtr = thrust::raw_pointer_cast(&(result_cu[0]));
+    const double ALPHA = 1;
+    const double BETA = 0;
 
     std::vector<double> time_stamp_cublas;
     for (auto i = 0; i < num_iter; i++)
@@ -185,19 +187,18 @@ int main(int args, char *argv[])
         std::chrono::system_clock::time_point start_cublas, end_cublas;
         start_cublas = std::chrono::system_clock::now();
 
-//cusparseDcsrmv
-        ::cusparseDbsrxmv(cusparse, CUSPARSE_OPERATION_NON_TRANSPOSE,
+        ::cusparseDcsrmv(cusparse, CUSPARSE_OPERATION_NON_TRANSPOSE,
             n, n, nnz,
             &ALPHA, matDescr, valPtr, rowPtr, colPtr,
             vec_xPtr,
             &BETA, result_cuPtr);
 
         end_cublas = std::chrono::system_clock::now();
-        time_stamp_cublas.push_back(static_cast<double>(std::chrono::duration_cast<std::chrono::microseconds>(end_cublas - start_cublas).count()));
+        time_stamp_cublas.push_back(static_cast<double>(std::chrono::duration_cast<std::chrono::nanoseconds>(end_cublas - start_cublas).count())/1000/1000);
      }
-    std::unique_ptr<float[]> result_cu_host(new float[n]);
+    std::unique_ptr<double[]> result_cu_host(new double[n]);
     thrust::copy_n(result_cu.begin(), n, result_cu_host.get());
-    */
+    
     const dim3 grid_scl(std::ceil(n / static_cast<double>(block.x)), 1, 1);
     std::vector<double> time_stamp_scl;
     for (auto i = 0; i < num_iter; i++)
@@ -220,6 +221,9 @@ int main(int args, char *argv[])
     const auto median_it_scl = time_stamp_scl.begin() + time_stamp_scl.size() / 2;
     std::nth_element(time_stamp_scl.begin(), median_it_scl, time_stamp_scl.end());
     const auto time_scl = *median_it_scl;
+    const auto median_it_cublas = time_stamp_cublas.begin() + time_stamp_cublas.size() / 2;
+    std::nth_element(time_stamp_cublas.begin(), median_it_cublas, time_stamp_cublas.end());
+    const auto time_cublas = *median_it_cublas;
 
     const auto flops = 2 * nnz;
     const auto bytes = (n + 1) * sizeof(int) + nnz * sizeof(double) + nnz * sizeof(int) + 3 * n * sizeof(double);
@@ -233,7 +237,7 @@ int main(int args, char *argv[])
     //std::cout << "perf(cublas): " << bytes / time_cublas / 1e6 << " [Gbytes/sec]" << std::endl;
     //std::cout << "residual norm 2: " << residual / y_norm << std::endl;
 
-    std::cout << fname << "," << std::fixed << std::setprecision(15) << time << "," << time_scl << "," << flops / time / 1e9 << "," << flops / time_scl / 1e9 << "," << bytes / time / 1e9 << "," << bytes / time_scl / 1e9 << std::endl; 
+    std::cout << fname << "," << std::fixed << std::setprecision(15) << time_scl << "," << time << "," << time_cublas << "," << flops / time_scl / 1e9 << "," << flops / time / 1e9 << "," << flops / time_cublas / 1e9 << "," << bytes / time_scl / 1e9 << "," << bytes / time / 1e9 << "," << bytes / time_cublas / 1e9 << std::endl; 
     return 0;
 }
 

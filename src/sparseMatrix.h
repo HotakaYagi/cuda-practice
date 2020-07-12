@@ -34,10 +34,6 @@ public:
         std::cout << "EROOR!" << std::endl;
     }
   
-        std::cout << "m:" << m << std::endl;
-        std::cout << "n:" << n << std::endl;
-        std::cout << "nnz:" << nnz << std::endl;
-
     // sparse (csr) を作るところ
     //row.reset(new int[n + 1]);
     auto current_n = 1;

@@ -21,10 +21,12 @@ public:
   //TODO: 行列ベクトル積とか基本演算実装しとく？
 };
   
-  sparseMatrix::sparseMatrix(std::string fname)
-  {
+sparseMatrix::sparseMatrix(std::string fname)
+{
     // TODO: 長方形の行列や複素数もパースできると良い
     // mtx file を読む
+  if (fname.find("mtx") != std::string::npos)
+  {
     std::ifstream fin(fname);
     
     while (fin.peek() == '%') fin.ignore(2048, '\n');
@@ -55,6 +57,36 @@ public:
     row[n] = nnz;
     fin.close();
   }
+  else
+  {
+    n = 20000;
+    m = 20000;
+    nnz = m * n;
+
+    std::unique_ptr<double[]> matrix(new double[m * n]);
+    for (auto i = 0; i < m * n; i++)
+    { 
+      matrix[i] = 1.0;
+    }
+
+    auto nnz_count = 0;
+    row.push_back(0);
+    for (auto i = 0; i < n; i++)
+    {
+      for (auto j = 0; j < n; j++)
+      {	      
+         if (matrix[i * n + j] != 0)
+         {	          
+            val.push_back(matrix[i * n + j]);
+            col.push_back(j);
+            nnz_count++;
+         }
+      }
+      row.push_back(nnz_count);
+    }	      
+    row[n] = nnz;
+  }
+}
 
 /*
 void sparseMatrix::residual(const float * __restrict__ x, const float * __restrict__ y, float * __restrict__ answer)

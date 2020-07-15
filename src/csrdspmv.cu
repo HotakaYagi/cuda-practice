@@ -109,12 +109,12 @@ int main(int args, char *argv[])
     int thread_size = atoi(argv[2]);
     const auto blocksize = thread_size;
     const dim3 block(blocksize, 1, 1);
-    const dim3 grid(warpSize * std::ceil(n / static_cast<double>(block.x)), 1, 1);
+    const dim3 grid(std::ceil(n / static_cast<double>(block.x)), 1, 1);
     
     // 時間計測するところ
-    const auto num_iter = 10;
+    const auto num_iter = 30;
     std::vector<double> time_stamp;
-    
+
     for (auto i = 0; i < num_iter; i++)
     {
         std::chrono::system_clock::time_point start, end;
@@ -164,7 +164,7 @@ int main(int args, char *argv[])
     {
         std::cout << "ng" << std::endl;
     }
-    */
+*/
     // cuSPARSE
     
     ::cusparseHandle_t cusparse;
@@ -199,7 +199,6 @@ int main(int args, char *argv[])
     std::unique_ptr<double[]> result_cu_host(new double[n]);
     thrust::copy_n(result_cu.begin(), n, result_cu_host.get());
     
-    const dim3 grid_scl(std::ceil(n / static_cast<double>(block.x)), 1, 1);
     std::vector<double> time_stamp_scl;
     for (auto i = 0; i < num_iter; i++)
     {
@@ -207,7 +206,7 @@ int main(int args, char *argv[])
         start = std::chrono::system_clock::now();
 
         // 計算するところ
-        spMulAdd_scalar<double> <<<grid_scl, block>>>(rowPtr, colPtr, valPtr, vec_xPtr, vec_yPtr, n, nnz);
+        spMulAdd_scalar<double> <<<grid, block>>>(rowPtr, colPtr, valPtr, vec_xPtr, vec_yPtr, n, nnz);
 
         end = std::chrono::system_clock::now();
 

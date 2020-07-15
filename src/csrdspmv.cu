@@ -109,23 +109,24 @@ int main(int args, char *argv[])
     int thread_size = atoi(argv[2]);
     const auto blocksize = thread_size;
     const dim3 block(blocksize, 1, 1);
-    const dim3 grid(std::ceil(n / static_cast<double>(block.x)), 1, 1);
+    const dim3 grid(warpSize * std::ceil(n / static_cast<double>(block.x)), 1, 1);
     
     // 時間計測するところ
-    const auto num_iter = 30;
+    const auto num_iter = 10;
     std::vector<double> time_stamp;
 
     for (auto i = 0; i < num_iter; i++)
     {
         std::chrono::system_clock::time_point start, end;
-        start = std::chrono::system_clock::now();
+        cudaDeviceSynchronize();
+        start = std::chrono::high_resolution_clock::now();
 
         // 計算するところ
         spMulAdd_vector<double> <<<grid, block>>>(rowPtr, colPtr, valPtr, vec_xPtr, vec_yPtr, n, nnz);
 
-        end = std::chrono::system_clock::now();
-
-        time_stamp.push_back(static_cast<double>(std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count())/1000/1000);
+        cudaDeviceSynchronize();
+        end = std::chrono::high_resolution_clock::now();
+        time_stamp.push_back(std::chrono::duration_cast<std::chrono::duration<double>>(end - start).count());
     }
 
     // 結果があっているかcpuでも計算して確認するところ
@@ -152,6 +153,7 @@ int main(int args, char *argv[])
     
     residual = std::sqrt(residual);
     y_norm = std::sqrt(y_norm);
+    std::cout << residual/y_norm << std::endl;
 
 /*
     // float で誤差含めてだいたいこのくらい合ってれば正しい？
@@ -184,8 +186,9 @@ int main(int args, char *argv[])
     std::vector<double> time_stamp_cublas;
     for (auto i = 0; i < num_iter; i++)
     {
-        std::chrono::system_clock::time_point start_cublas, end_cublas;
-        start_cublas = std::chrono::system_clock::now();
+        std::chrono::system_clock::time_point start, end;
+        cudaDeviceSynchronize();
+        start = std::chrono::high_resolution_clock::now();
 
         ::cusparseDcsrmv(cusparse, CUSPARSE_OPERATION_NON_TRANSPOSE,
             n, n, nnz,
@@ -193,24 +196,27 @@ int main(int args, char *argv[])
             vec_xPtr,
             &BETA, result_cuPtr);
 
-        end_cublas = std::chrono::system_clock::now();
-        time_stamp_cublas.push_back(static_cast<double>(std::chrono::duration_cast<std::chrono::nanoseconds>(end_cublas - start_cublas).count())/1000/1000);
+        cudaDeviceSynchronize();
+        end = std::chrono::high_resolution_clock::now();
+        time_stamp_cublas.push_back(std::chrono::duration_cast<std::chrono::duration<double>>(end - start).count());
      }
     std::unique_ptr<double[]> result_cu_host(new double[n]);
     thrust::copy_n(result_cu.begin(), n, result_cu_host.get());
-    
+
+    const dim3 grid_scl(std::ceil(n / static_cast<double>(block.x)), 1, 1);
     std::vector<double> time_stamp_scl;
     for (auto i = 0; i < num_iter; i++)
     {
         std::chrono::system_clock::time_point start, end;
-        start = std::chrono::system_clock::now();
+        cudaDeviceSynchronize();
+        start = std::chrono::high_resolution_clock::now();
 
         // 計算するところ
-        spMulAdd_scalar<double> <<<grid, block>>>(rowPtr, colPtr, valPtr, vec_xPtr, vec_yPtr, n, nnz);
+        spMulAdd_scalar<double> <<<grid_scl, block>>>(rowPtr, colPtr, valPtr, vec_xPtr, vec_yPtr, n, nnz);
 
-        end = std::chrono::system_clock::now();
-
-        time_stamp_scl.push_back(static_cast<double>(std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count())/1000/1000);
+        cudaDeviceSynchronize();
+        end = std::chrono::high_resolution_clock::now();
+        time_stamp_scl.push_back(std::chrono::duration_cast<std::chrono::duration<double>>(end - start).count());
     }
  
     // 計算時間や次数、実効性能を出力

@@ -64,6 +64,28 @@ __global__ void spMulAdd_vector(const int * __restrict__ row, const int * __rest
     }
 }
 
+template<typename T>
+int check_result(const T * __restrict__ host_result, const T * __restrict__ result, const int n, const std::string routine)
+{
+    auto residual = 0;
+    auto y_norm = 0;
+    for (auto i = 0; i < n; i++)
+    {
+        residual += std::pow(host_result[i] - result[i], 2);
+        y_norm += std::pow(result[i], 2);
+    }
+    
+    residual = std::sqrt(residual);
+    y_norm = std::sqrt(y_norm);
+    const auto m = 14 - std::log10(n);
+    if (residual / y_norm > std::pow(10, -m))
+    {
+        std::cout << routine << " is nanka okashi" << std::endl;
+        return 1;
+    }
+    return 0;
+}
+
 int main(int args, char *argv[])
 {
     // 読み込みたい行列は実行時引数で与える
@@ -143,30 +165,11 @@ int main(int args, char *argv[])
         }
     }
 
-    auto residual = 0;
-    auto y_norm = 0;
-    for (auto i = 0; i < n; i++)
-    {
-        residual += std::pow(host_result[i] - result[i], 2);
-        y_norm += std::pow(result[i], 2);
-    }
-    
-    residual = std::sqrt(residual);
-    y_norm = std::sqrt(y_norm);
-    std::cout << residual/y_norm << std::endl;
+   if (check_result<double>(host_result.get(), result.get(), n, "vector") == 1)
+   {
+       return 1;
+   }
 
-/*
-    // float で誤差含めてだいたいこのくらい合ってれば正しい？
-    const auto m = 14 - std::log10(n);
-    if (residual / y_norm < m)
-    {
-        std::cout << "ok" << std::endl;
-    }
-    else
-    {
-        std::cout << "ng" << std::endl;
-    }
-*/
     // cuSPARSE
     
     ::cusparseHandle_t cusparse;
@@ -200,8 +203,14 @@ int main(int args, char *argv[])
         end = std::chrono::high_resolution_clock::now();
         time_stamp_cublas.push_back(std::chrono::duration_cast<std::chrono::duration<double>>(end - start).count());
      }
+
     std::unique_ptr<double[]> result_cu_host(new double[n]);
     thrust::copy_n(result_cu.begin(), n, result_cu_host.get());
+
+   if (check_result<double>(host_result.get(), result_cu_host.get(), n, "cuSPARSE") == 1)
+   {
+       return 1;
+   }
 
     const dim3 grid_scl(std::ceil(n / static_cast<double>(block.x)), 1, 1);
     std::vector<double> time_stamp_scl;
@@ -219,6 +228,14 @@ int main(int args, char *argv[])
         time_stamp_scl.push_back(std::chrono::duration_cast<std::chrono::duration<double>>(end - start).count());
     }
  
+    std::unique_ptr<double[]> result_scl(new double[n]);
+    thrust::copy_n(vec_y.begin(), n, result_scl.get());
+
+   if (check_result<double>(host_result.get(), result_scl.get(), n, "scalar") == 1)
+   {
+       return 1;
+   }
+
     // 計算時間や次数、実効性能を出力
     const auto median_it = time_stamp.begin() + time_stamp.size() / 2;
     std::nth_element(time_stamp.begin(), median_it, time_stamp.end());

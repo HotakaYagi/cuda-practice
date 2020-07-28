@@ -87,7 +87,7 @@ __global__ void compressed_matrix_vec_mul_adaptive_kernel(
     int row_stop  = row_blocks[block_id + 1];
     int element_start = row_indices[row_start];
     int element_stop = row_indices[row_stop];
-    int rows_to_process = row_stop - row_start;
+    //int rows_to_process = row_stop - row_start;
 
       // load to shared buffer:
       for (auto i = element_start + threadIdx.x; i < element_stop; i += blockDim.x)
@@ -112,7 +112,6 @@ __global__ void compressed_matrix_vec_mul_adaptive_kernel(
       }
    }
 }
-
 
 template<typename T>
 int check_result(const T * __restrict__ host_result, const T * __restrict__ result, const int n, const std::string routine)
@@ -161,18 +160,21 @@ int main(int args, char *argv[])
 
     // gpu用ので配列を生成
     thrust::device_vector<int> row(n + 1);
+    thrust::device_vector<int> row_blocks(n + 1);
     thrust::device_vector<int> col(nnz);
     thrust::device_vector<double> val(nnz);
     thrust::device_vector<double> vec_x(n);
     thrust::device_vector<double> vec_y(n);
 
     thrust::copy_n(sp.row.begin(), n + 1, row.begin());
+    thrust::copy_n(sp.row_blocks.begin(), n + 1, row_blocks.begin());
     thrust::copy_n(sp.col.begin(), nnz, col.begin());
     thrust::copy_n(sp.val.begin(), nnz, val.begin());
     thrust::copy_n(host_x.get(), n, vec_x.begin());
     thrust::copy_n(host_y.get(), n, vec_y.begin());
 
     int* rowPtr = thrust::raw_pointer_cast(&(row[0]));
+    int* row_blockPtr = thrust::raw_pointer_cast(&(row_blocks[0]));
     int* colPtr = thrust::raw_pointer_cast(&(col[0]));
     double* valPtr = thrust::raw_pointer_cast(&(val[0]));
     double* vec_xPtr = thrust::raw_pointer_cast(&(vec_x[0]));
@@ -182,8 +184,9 @@ int main(int args, char *argv[])
     int thread_size = atoi(argv[2]);
     const auto blocksize = thread_size;
     const dim3 block(blocksize, 1, 1);
-    const dim3 grid(warpSize * std::ceil(n / static_cast<double>(block.x)), 1, 1);
+    const dim3 grid(std::ceil(n / static_cast<double>(block.x)), 1, 1);
     
+
     // 時間計測するところ
     const auto num_iter = 10;
     std::vector<double> time_stamp;
@@ -194,14 +197,28 @@ int main(int args, char *argv[])
         cudaDeviceSynchronize();
         start = std::chrono::high_resolution_clock::now();
 
-        // 計算するところ
-        spMulAdd_vector<double> <<<grid, block>>>(rowPtr, colPtr, valPtr, vec_xPtr, vec_yPtr, n, nnz);
+
+    // 計算するところ
+    compressed_matrix_vec_mul_adaptive_kernel<double> <<<grid, block>>>(
+          rowPtr,
+          colPtr,
+          row_blockPtr,
+          valPtr,
+          sp.row_block_num_,
+          vec_xPtr,
+          0,
+          1,
+          vec_yPtr,
+          0,
+          1,
+          n);
 
         cudaDeviceSynchronize();
         end = std::chrono::high_resolution_clock::now();
         time_stamp.push_back(std::chrono::duration_cast<std::chrono::duration<double>>(end - start).count());
     }
 
+    std::cout << "koko ?" << std::endl;
     // 結果があっているかcpuでも計算して確認するところ
     std::unique_ptr<double[]> result(new double[n]);
     thrust::copy_n(vec_y.begin(), n, result.get());
@@ -215,102 +232,22 @@ int main(int args, char *argv[])
            host_result[i] += sp.val[j] * host_x[sp.col[j]]; 
         }
     }
+    std::cout << "koko ?" << std::endl;
 
-   if (check_result<double>(host_result.get(), result.get(), n, "vector") == 1)
+   if (check_result<double>(host_result.get(), result.get(), n, "stream") == 1)
    {
        return 1;
    }
-
-    // cuSPARSE
-    
-    ::cusparseHandle_t cusparse;
-    ::cusparseCreate(&cusparse);
-
-    ::cusparseMatDescr_t matDescr;
-    ::cusparseCreateMatDescr(&matDescr);
-    ::cusparseSetMatType(matDescr, CUSPARSE_MATRIX_TYPE_GENERAL);
-    ::cusparseSetMatIndexBase(matDescr, CUSPARSE_INDEX_BASE_ZERO);
-
-    thrust::device_vector<double> result_cu(n);
-    thrust::copy_n(host_y.get(), n, result_cu.begin());
-    double* result_cuPtr = thrust::raw_pointer_cast(&(result_cu[0]));
-    const double ALPHA = 1;
-    const double BETA = 0;
-
-    std::vector<double> time_stamp_cublas;
-    for (auto i = 0; i < num_iter; i++)
-    {
-        std::chrono::system_clock::time_point start, end;
-        cudaDeviceSynchronize();
-        start = std::chrono::high_resolution_clock::now();
-
-        ::cusparseDcsrmv(cusparse, CUSPARSE_OPERATION_NON_TRANSPOSE,
-            n, n, nnz,
-            &ALPHA, matDescr, valPtr, rowPtr, colPtr,
-            vec_xPtr,
-            &BETA, result_cuPtr);
-
-        cudaDeviceSynchronize();
-        end = std::chrono::high_resolution_clock::now();
-        time_stamp_cublas.push_back(std::chrono::duration_cast<std::chrono::duration<double>>(end - start).count());
-     }
-
-    std::unique_ptr<double[]> result_cu_host(new double[n]);
-    thrust::copy_n(result_cu.begin(), n, result_cu_host.get());
-
-   if (check_result<double>(host_result.get(), result_cu_host.get(), n, "cuSPARSE") == 1)
-   {
-       return 1;
-   }
-
-    const dim3 grid_scl(std::ceil(n / static_cast<double>(block.x)), 1, 1);
-    std::vector<double> time_stamp_scl;
-    for (auto i = 0; i < num_iter; i++)
-    {
-        std::chrono::system_clock::time_point start, end;
-        cudaDeviceSynchronize();
-        start = std::chrono::high_resolution_clock::now();
-
-        // 計算するところ
-        spMulAdd_scalar<double> <<<grid_scl, block>>>(rowPtr, colPtr, valPtr, vec_xPtr, vec_yPtr, n, nnz);
-
-        cudaDeviceSynchronize();
-        end = std::chrono::high_resolution_clock::now();
-        time_stamp_scl.push_back(std::chrono::duration_cast<std::chrono::duration<double>>(end - start).count());
-    }
- 
-    std::unique_ptr<double[]> result_scl(new double[n]);
-    thrust::copy_n(vec_y.begin(), n, result_scl.get());
-
-   if (check_result<double>(host_result.get(), result_scl.get(), n, "scalar") == 1)
-   {
-       return 1;
-   }
-
-    // 計算時間や次数、実効性能を出力
+   // 計算時間や次数、実効性能を出力
     const auto median_it = time_stamp.begin() + time_stamp.size() / 2;
     std::nth_element(time_stamp.begin(), median_it, time_stamp.end());
     const auto time = *median_it;
-    const auto median_it_scl = time_stamp_scl.begin() + time_stamp_scl.size() / 2;
-    std::nth_element(time_stamp_scl.begin(), median_it_scl, time_stamp_scl.end());
-    const auto time_scl = *median_it_scl;
-    const auto median_it_cublas = time_stamp_cublas.begin() + time_stamp_cublas.size() / 2;
-    std::nth_element(time_stamp_cublas.begin(), median_it_cublas, time_stamp_cublas.end());
-    const auto time_cublas = *median_it_cublas;
 
     const auto flops = 2 * nnz;
-    const auto bytes = (n + 1) * sizeof(int) + nnz * sizeof(double) + nnz * sizeof(int) + 3 * n * sizeof(double);
-    //std::cout << "matrix: " << fname << std::endl;
-    //std::cout << "n: " << n << ", nnz: " << nnz << ", threads: " << blocksize << std::endl;
-    //std::cout << "time: " << time << " [msec]" << std::endl;
-    //std::cout << "time(cublas): " << time_cublas << " [msec]" << std::endl;
-    //std::cout << "perf: " << flops / time / 1e6 << " [Gflops/sec]" << std::endl;
-    //std::cout << "perf(cublas): " << flops / time_cublas / 1e6 << " [Gflops/sec]" << std::endl;
-    //std::cout << "perf: " << bytes / time / 1e6 << " [Gbytes/sec]" << std::endl;
-    //std::cout << "perf(cublas): " << bytes / time_cublas / 1e6 << " [Gbytes/sec]" << std::endl;
-    //std::cout << "residual norm 2: " << residual / y_norm << std::endl;
+    const auto bytes = 2 * (n + 1) * sizeof(int) + nnz * sizeof(double) + nnz * sizeof(int) + 3 * n * sizeof(double);
 
-    std::cout << fname << "," << std::fixed << std::setprecision(15) << time_scl << "," << time << "," << time_cublas << "," << flops / time_scl / 1e9 << "," << flops / time / 1e9 << "," << flops / time_cublas / 1e9 << "," << bytes / time_scl / 1e9 << "," << bytes / time / 1e9 << "," << bytes / time_cublas / 1e9 << std::endl; 
+    std::cout << fname << "," << std::fixed << std::setprecision(15) << time << "," << flops / time / 1e9 << "," << bytes / time / 1e9 << std::endl; 
+
     return 0;
 }
 

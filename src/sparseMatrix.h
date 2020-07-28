@@ -9,9 +9,10 @@
 class sparseMatrix
 {
 public:
-  int m, n, nnz;
+  int m, n, nnz, row_block_num_;
   //std::unique_ptr<int[]> row;
   std::vector<int> row;
+  std::vector<int> row_blocks;
   std::vector<int> col;
   std::vector<double> val;
 
@@ -56,6 +57,38 @@ sparseMatrix::sparseMatrix(std::string fname)
     }
     row[n] = nnz;
     fin.close();
+    
+    auto num_entries_in_current_batch = 0;
+    const auto shared_mem_size = 1024; // number of column indices loaded to shared memory, number of floating point values loaded to shared memory
+
+    row_block_num_ = 0;
+    row_blocks.push_back(0);
+    for (auto i = 0; i < n; ++i)
+    {
+      auto entries_in_row = row[i + 1] - row[i];
+      num_entries_in_current_batch += entries_in_row;
+
+      if (num_entries_in_current_batch > shared_mem_size)
+      {
+        auto rows_in_batch = i - row_blocks[row_block_num_];
+        if (rows_in_batch > 0) // at least one full row is in the batch. Use current row in next batch.
+        {
+          //row_blocks.set(++row_block_num_, i--);
+          row_blocks.push_back(i--);
+        }
+        else // row is larger than buffer in shared memory
+          row_blocks.push_back(i + 1);
+          //row_blocks.set(++row_block_num_, i+1);
+        ++row_block_num_;
+        num_entries_in_current_batch = 0;
+      }
+    }
+    if (num_entries_in_current_batch > 0)
+    {
+      row_blocks.push_back(n);
+      ++row_block_num_;
+      //row_blocks.set(++row_block_num_, rows_);
+    }
   }
   else
   {

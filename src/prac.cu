@@ -87,8 +87,9 @@ __global__ void compressed_matrix_vec_mul_adaptive_kernel(
     int row_stop  = row_blocks[block_id + 1];
     int element_start = row_indices[row_start];
     int element_stop = row_indices[row_stop];
-    //int rows_to_process = row_stop - row_start;
-
+    int rows_to_process = row_stop - row_start;
+    if (rows_to_process > 1)
+    {
       // load to shared buffer:
       for (auto i = element_start + threadIdx.x; i < element_stop; i += blockDim.x)
       {
@@ -110,7 +111,29 @@ __global__ void compressed_matrix_vec_mul_adaptive_kernel(
         //AlphaBetaHandlerT::apply(result[row * inc_result + start_result], alpha, dot_prod, beta);
         result[row * inc_result + start_result] =  dot_prod;
       }
-   }
+    }
+    else // CSR vector for a single row
+    {
+      // load and sum to shared buffer:
+      shared_elements[threadIdx.x] = 0;
+      for (auto i = element_start + threadIdx.x; i < element_stop; i += blockDim.x)
+        shared_elements[threadIdx.x] += elements[i] * x[column_indices[i] * inc_x + start_x];
+
+      // reduction to obtain final result
+      for (auto stride = blockDim.x/2; stride > 0; stride /= 2)
+      {
+        //shared_elements[threadIdx.x] += __shfl_down_sync(0, shared_elements[threadIdx.x], stride, blockDim.x);
+        __syncthreads();
+        if (threadIdx.x < stride)
+          shared_elements[threadIdx.x] += shared_elements[threadIdx.x+stride];
+      }
+
+      if (threadIdx.x == 0)
+        result[row_start * inc_result + start_result] = shared_elements[0];
+    }
+
+    __syncthreads();  // avoid race conditions
+  }
 }
 
 template<typename T>
@@ -158,6 +181,7 @@ int main(int args, char *argv[])
         host_y[i] = 0;
     }
 
+    std::cout << sp.row_blocks.size() << std::endl;
     // gpu用ので配列を生成
     thrust::device_vector<int> row(n + 1);
     thrust::device_vector<int> row_blocks(n + 1);
@@ -199,7 +223,7 @@ int main(int args, char *argv[])
 
 
     // 計算するところ
-    compressed_matrix_vec_mul_adaptive_kernel<double> <<<grid, block>>>(
+    compressed_matrix_vec_mul_adaptive_kernel<double> <<<256, 128>>>(
           rowPtr,
           colPtr,
           row_blockPtr,
@@ -218,7 +242,6 @@ int main(int args, char *argv[])
         time_stamp.push_back(std::chrono::duration_cast<std::chrono::duration<double>>(end - start).count());
     }
 
-    std::cout << "koko ?" << std::endl;
     // 結果があっているかcpuでも計算して確認するところ
     std::unique_ptr<double[]> result(new double[n]);
     thrust::copy_n(vec_y.begin(), n, result.get());
@@ -232,7 +255,6 @@ int main(int args, char *argv[])
            host_result[i] += sp.val[j] * host_x[sp.col[j]]; 
         }
     }
-    std::cout << "koko ?" << std::endl;
 
    if (check_result<double>(host_result.get(), result.get(), n, "stream") == 1)
    {
@@ -244,7 +266,7 @@ int main(int args, char *argv[])
     const auto time = *median_it;
 
     const auto flops = 2 * nnz;
-    const auto bytes = 2 * (n + 1) * sizeof(int) + nnz * sizeof(double) + nnz * sizeof(int) + 3 * n * sizeof(double);
+    const auto bytes = (n + 1) * sizeof(int) + nnz * sizeof(double) + nnz * sizeof(int) + 3 * n * sizeof(double);
 
     std::cout << fname << "," << std::fixed << std::setprecision(15) << time << "," << flops / time / 1e9 << "," << bytes / time / 1e9 << std::endl; 
 

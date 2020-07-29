@@ -57,9 +57,39 @@ sparseMatrix::sparseMatrix(std::string fname)
     }
     row[n] = nnz;
     fin.close();
-    
+   }
+  else
+  {
+    n = 20000;
+    m = 20000;
+    nnz = m * n;
+
+    std::unique_ptr<double[]> matrix(new double[m * n]);
+    for (auto i = 0; i < m * n; i++)
+    { 
+      matrix[i] = 1.0;
+    }
+
+    auto nnz_count = 0;
+    row.push_back(0);
+    for (auto i = 0; i < n; i++)
+    {
+      for (auto j = 0; j < n; j++)
+      {	      
+         if (matrix[i * n + j] != 0)
+         {	          
+            val.push_back(matrix[i * n + j]);
+            col.push_back(j);
+            nnz_count++;
+         }
+      }
+      row.push_back(nnz_count);
+    }	      
+    row[n] = nnz;
+  }  
     auto num_entries_in_current_batch = 0;
-    const auto shared_mem_size = 1024; // number of column indices loaded to shared memory, number of floating point values loaded to shared memory
+    const auto shared_mem_size = 1024;
+    // number of column indices loaded to shared memory, number of floating point values loaded to shared memory
 
     row_block_num_ = 0;
     row_blocks.push_back(0);
@@ -89,36 +119,6 @@ sparseMatrix::sparseMatrix(std::string fname)
       ++row_block_num_;
       //row_blocks.set(++row_block_num_, rows_);
     }
-  }
-  else
-  {
-    n = 20000;
-    m = 20000;
-    nnz = m * n;
-
-    std::unique_ptr<double[]> matrix(new double[m * n]);
-    for (auto i = 0; i < m * n; i++)
-    { 
-      matrix[i] = 1.0;
-    }
-
-    auto nnz_count = 0;
-    row.push_back(0);
-    for (auto i = 0; i < n; i++)
-    {
-      for (auto j = 0; j < n; j++)
-      {	      
-         if (matrix[i * n + j] != 0)
-         {	          
-            val.push_back(matrix[i * n + j]);
-            col.push_back(j);
-            nnz_count++;
-         }
-      }
-      row.push_back(nnz_count);
-    }	      
-    row[n] = nnz;
-  }
 }
 
 /*

@@ -65,6 +65,84 @@ __global__ void spMulAdd_vector(const int * __restrict__ row, const int * __rest
 }
 
 template<typename NumericT>
+__global__ void compressed_matrix_vec_mul_adaptive_kernel_opt(
+          const int *  row_indices,
+          const int *  column_indices,
+          const int *  row_blocks,
+          const NumericT * elements,
+          int num_blocks,
+          const NumericT * __restrict__ x,
+          int start_x,
+          int inc_x,
+          NumericT * result,
+          int start_result,
+          int inc_result,
+          int size_result)
+{
+  __shared__ NumericT     shared_elements[1024];
+
+  auto tid = threadIdx.x + blockIdx.x * blockDim.x;
+  auto rowid = tid / warpSize;
+  auto lane = tid % warpSize;
+  if (rowide < size_result)
+  {
+    int row_start = row_blocks[rowid];
+    int row_stop  = row_blocks[rowid + 1];
+    int element_start = row_indices[row_start];
+    int element_stop = row_indices[row_stop];
+    int rows_to_process = row_stop - row_start;
+    if (rows_to_process > 1)
+    {
+      // load to shared buffer:
+      for (auto i = element_start + lane; i < element_stop; i += warpSize)
+      {
+        shared_elements[i - element_start] = elements[i] * x[column_indices[i] * inc_x + start_x];
+      }
+
+      __syncthreads();
+
+      // use one thread per row to sum:
+      for (auto row = row_start + lane; row < row_stop; row += warpSize)
+      {
+        NumericT dot_prod = 0;
+        int thread_row_start = row_indices[row]     - element_start;
+        int thread_row_stop  = row_indices[row + 1] - element_start;
+        for (auto i = thread_row_start; i < thread_row_stop; ++i)
+        {
+          dot_prod += shared_elements[i];
+        }
+        //AlphaBetaHandlerT::apply(result[row * inc_result + start_result], alpha, dot_prod, beta);
+        result[row * inc_result + start_result] =  dot_prod;
+      }
+    }
+    else // CSR vector for a single row
+    {
+      // load and sum to shared buffer:
+      shared_elements[lane] = 0;
+      //NumericT y_val = 0.0;
+      for (auto i = element_start + lane; i < element_stop; i += warpSize)
+        shared_elements[lane] += elements[i] * x[column_indices[i] * inc_x + start_x];
+        //y_val += elements[i] * x[column_indices[i] * inc_x + start_x];
+
+      // reduction to obtain final result
+      for (auto stride = warpSize; stride > 0; stride /= 2)
+      {
+        //y_val += __shfl_down_sync(0, y_val, stride, blockDim.x);
+        __syncthreads();
+        if (lane < stride)
+          shared_elements[lane] += shared_elements[lane + stride];
+      }
+
+      if (lane == 0)
+        result[row_start * inc_result + start_result] = shared_elements[0];
+        //result[row_start * inc_result + start_result] = y_val;
+    }
+
+    __syncthreads();  // avoid race conditions
+  }
+}
+
+template<typename NumericT>
 __global__ void compressed_matrix_vec_mul_adaptive_kernel(
           const int *  row_indices,
           const int *  column_indices,
@@ -211,7 +289,7 @@ int main(int args, char *argv[])
     int thread_size = atoi(argv[2]);
     const auto blocksize = thread_size;
     const dim3 block(blocksize, 1, 1);
-    const dim3 grid(std::ceil(n / static_cast<double>(block.x)), 1, 1);
+    const dim3 grid(warpSize * std::ceil(n / static_cast<double>(block.x)), 1, 1);
     
 
     // 時間計測するところ
@@ -226,7 +304,7 @@ int main(int args, char *argv[])
 
 
     // 計算するところ
-    compressed_matrix_vec_mul_adaptive_kernel<double> <<<512, 256>>>(
+    compressed_matrix_vec_mul_adaptive_kernel_opt<double> <<<grid, block>>>(
           rowPtr,
           colPtr,
           row_blockPtr,

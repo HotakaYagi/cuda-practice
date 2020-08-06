@@ -66,12 +66,12 @@ __global__ void spMulAdd_vector(const int * __restrict__ row, const int * __rest
 
 template<typename NumericT>
 __global__ void compressed_matrix_vec_mul_adaptive_kernel(
-          const int * row_indices,
-          const int * column_indices,
-          const int * row_blocks,
+          const int *  row_indices,
+          const int *  column_indices,
+          const int *  row_blocks,
           const NumericT * elements,
           int num_blocks,
-          const NumericT * x,
+          const NumericT * __restrict__ x,
           int start_x,
           int inc_x,
           NumericT * result,
@@ -116,13 +116,15 @@ __global__ void compressed_matrix_vec_mul_adaptive_kernel(
     {
       // load and sum to shared buffer:
       shared_elements[threadIdx.x] = 0;
+      //NumericT y_val = 0.0;
       for (auto i = element_start + threadIdx.x; i < element_stop; i += blockDim.x)
         shared_elements[threadIdx.x] += elements[i] * x[column_indices[i] * inc_x + start_x];
+        //y_val += elements[i] * x[column_indices[i] * inc_x + start_x];
 
       // reduction to obtain final result
       for (auto stride = blockDim.x/2; stride > 0; stride /= 2)
       {
-        //shared_elements[threadIdx.x] += __shfl_down_sync(0, shared_elements[threadIdx.x], stride, blockDim.x);
+        //y_val += __shfl_down_sync(0, y_val, stride, blockDim.x);
         __syncthreads();
         if (threadIdx.x < stride)
           shared_elements[threadIdx.x] += shared_elements[threadIdx.x+stride];
@@ -130,6 +132,7 @@ __global__ void compressed_matrix_vec_mul_adaptive_kernel(
 
       if (threadIdx.x == 0)
         result[row_start * inc_result + start_result] = shared_elements[0];
+        //result[row_start * inc_result + start_result] = y_val;
     }
 
     __syncthreads();  // avoid race conditions
@@ -181,17 +184,17 @@ int main(int args, char *argv[])
         host_y[i] = 0;
     }
 
-    std::cout << sp.row_blocks.size() << std::endl;
+    const auto block_size = sp.row_blocks.size();
     // gpu用ので配列を生成
     thrust::device_vector<int> row(n + 1);
-    thrust::device_vector<int> row_blocks(n + 1);
+    thrust::device_vector<int> row_blocks(block_size);
     thrust::device_vector<int> col(nnz);
     thrust::device_vector<double> val(nnz);
     thrust::device_vector<double> vec_x(n);
     thrust::device_vector<double> vec_y(n);
 
     thrust::copy_n(sp.row.begin(), n + 1, row.begin());
-    thrust::copy_n(sp.row_blocks.begin(), n + 1, row_blocks.begin());
+    thrust::copy_n(sp.row_blocks.begin(), block_size, row_blocks.begin());
     thrust::copy_n(sp.col.begin(), nnz, col.begin());
     thrust::copy_n(sp.val.begin(), nnz, val.begin());
     thrust::copy_n(host_x.get(), n, vec_x.begin());
@@ -223,7 +226,7 @@ int main(int args, char *argv[])
 
 
     // 計算するところ
-    compressed_matrix_vec_mul_adaptive_kernel<double> <<<256, 128>>>(
+    compressed_matrix_vec_mul_adaptive_kernel<double> <<<512, 256>>>(
           rowPtr,
           colPtr,
           row_blockPtr,

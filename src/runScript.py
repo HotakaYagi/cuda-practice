@@ -6,7 +6,7 @@ for root, dirs, files in os.walk("../matrix_large/"):
     for filename in files:
         matrixList.append(os.path.join(root, filename)) 
 
-threads = [8, 16, 32, 64, 128]
+threads = [256]
 for th in threads:
     result = []
     for matrix in matrixList:
